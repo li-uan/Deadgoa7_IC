@@ -35,7 +35,7 @@
 #define MOTOR_DUTY_MAX          (6000)
 
 /* 电机死区：占空比低于这个值时轮子转不动，因此只要需要动就给到这个值 */
-#define MOTOR_DEADZONE          (400)
+#define MOTOR_DEADZONE          (0)
 
 /* ---------------- 2. 编码器 ---------------- */
 /* 逐飞的编码器编号和引脚是绑定的，见 E07_encoder_demo */
@@ -62,7 +62,7 @@
 #define CTRL_PERIOD_MS          (5)     /* 5ms = 200Hz，新手够用 */
 
 /* ---------------- 5. 直立环参数（先都从 0 开始，按文档一步步加） ---------------- */
-#define BALANCE_ANGLE_ZERO      (2.20f) /* 平地静止实测值（符号翻转后） */
+#define BALANCE_ANGLE_ZERO      (2.10f) /* 平地静止实测值（符号翻转后） */
 #define BALANCE_KP              (650.0f)  /* 建议从 120 开始，每次加 40 */
 #define BALANCE_KD              (50.0f)  /* 建议从 8 开始，每次加 4 */
 
@@ -71,7 +71,7 @@
 
 /* ---------------- 6. 速度环（第一版先关掉，站住之后再开） ---------------- */
 #define SPEED_LOOP_ENABLE       (1)
-#define SPEED_KP                (0.0f)
+#define SPEED_KP                (0.01f)
 #define SPEED_KI                (0.0f)
 #define SPEED_TARGET            (0.0f)  /* 目标速度（编码器计数/5ms） */
 #define SPEED_I_LIMIT           (300.0f)
@@ -104,10 +104,13 @@
  * TEST_MODE = 1：只读传感器，电机绝对不动（验 IMU 方向用）
  * TEST_MODE = 2：电机测试，两轮同时 正转1.5s -> 停1s -> 反转1.5s -> 停1s 循环
  *                必须把车架起来、轮子悬空！                              */
-#define TEST_MODE               (5)
+#define TEST_MODE               (0)
 
 /* TEST_MODE=2 时的测试占空比（0~10000），1500 约等于 15% */
-#define MOTOR_TEST_DUTY         (1000)
+#define MOTOR_TEST_DUTY         (2000)
+
+/* 测试模式允许的最大测试幅度（诊断用，别超过 4000） */
+#define MOTOR_TEST_DUTY_MAX     (4000)
 
 /* 急停按键：按下立刻停机并清空输出。P20.6 是引脚表上的按键 IO。
  * 如果实测电平相反，把 KEY_STOP_ACTIVE_LOW 改成 0。                      */

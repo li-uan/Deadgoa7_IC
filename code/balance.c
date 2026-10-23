@@ -314,24 +314,26 @@ void balance_control_isr(void)
 
 #if (TEST_MODE == 5)
     {
-        /* DIAG-20261023-A: 悬空执行链验证，200ms 正向 -> 1s 停 ->
-         * 200ms 反向 -> 保持停止。仅运行一次，复位后才重新开始。
-         * 位于 IMU 启动等待与急停处理之后；本模式不运行平衡控制。
-         */
+        /* 起转门槛扫描：800 -> 1100 -> 1400 -> 1700 -> 2000 -> 2500
+         * 每档正向转 1s、停 0.5s，只跑一遍；复位后重新开始。
+         * 看轮子从哪一档开始明显转动，那一档就是起转门槛。 */
         static uint16 t5 = 0;
-        const uint16 pulse_ticks = (uint16)(200U / CTRL_PERIOD_MS);
-        const uint16 gap_ticks = (uint16)(1000U / CTRL_PERIOD_MS);
-        const uint16 end_ticks = (uint16)(2U * pulse_ticks + gap_ticks);
-        int16 l5, r5;
-        int16 test_duty = 0;
-        int16 test_mag = (int16)clampf((float)MOTOR_TEST_DUTY, 0.0f, 1000.0f);
+        static const int16 amps[6] = {800, 1100, 1400, 1700, 2000, 2500};
+        const uint16 on_ticks  = (uint16)(3000U / CTRL_PERIOD_MS);   /* 3s，方便观察 */
+        const uint16 off_ticks = (uint16)(1000U / CTRL_PERIOD_MS);   /* 停 1s */
+        const uint16 step      = (uint16)(on_ticks + off_ticks);
+        const uint16 total     = (uint16)(6U * step);
+        uint8  idx;
+        uint16 phase;
+        int16  l5, r5;
+        int16  test_duty = 0;
 
         encoder_read(&l5, &r5);
         g_sl = (float)l5;
         g_sr = (float)r5;
         g_speed += 0.1f * (((float)l5 + (float)r5) * 0.5f - g_speed);
 
-        /* 测试模式首次检测到按键就停，并锁存到复位；松开不会重新输出。 */
+        /* 急停：首次检测到按下就锁存，复位后才重新测试 */
         if (g_key_cnt != 0U) g_fault = 1;
         if (g_fault != 0U)
         {
@@ -339,12 +341,15 @@ void balance_control_isr(void)
             return;
         }
 
-        if (t5 < pulse_ticks) test_duty = test_mag;
-        else if (t5 >= (uint16)(pulse_ticks + gap_ticks) && t5 < end_ticks)
-            test_duty = (int16)(-test_mag);
-        if (t5 < end_ticks) t5++;  /* 饱和计数，避免溢出后意外重启 */
+        if (t5 < total)
+        {
+            idx   = (uint8)(t5 / step);
+            phase = (uint16)(t5 % step);
+            if (phase < on_ticks) test_duty = amps[idx];
+            t5++;
+        }
 
-        g_duty = test_duty;  /* 软件实际下发指令；不代表已测得驱动端电压 */
+        g_duty = test_duty;
         motor_output(1, test_duty);
         motor_output(0, test_duty);
         return;
