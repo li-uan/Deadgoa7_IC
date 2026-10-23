@@ -161,10 +161,49 @@ static void handle_line(char *line)
     {
         if (parse_float(&line[1], &v)) { balance_set_speed_sign(v); tx_str("OK S\r\n"); }
     }
+    else if (cmd == 'X' || cmd == 'x')
+    {
+        if (parse_float(&line[1], &v)) { balance_set_pulse_duty(v); tx_str("OK X\r\n"); }
+    }
     else if (cmd == '?')
     {
         tune_send_telemetry();
     }
+}
+
+void tune_pulse_dump(void)
+{
+    uint16 i, n;
+    const balance_pulse_row_t *r;
+
+    if (!balance_pulse_is_done()) return;
+
+    r = balance_pulse_rows();
+    n = balance_pulse_row_count();
+
+    tx_str("PULSE8 duty=");
+    tx_int((int32)balance_get_pulse_duty());
+    tx_str(" n=");
+    tx_int((int32)n);
+    tx_str("\r\n");
+    tx_str("t_ms,phase,ang_x100,rate_raw_x10,rate_x10,u_prev,u_cmd,sl,sr,reason\r\n");
+
+    for (i = 0; i < n; i++)
+    {
+        tx_int((int32)r[i].t_ms);           tx_str(",");
+        tx_int((int32)r[i].phase);          tx_str(",");
+        tx_int((int32)r[i].ang_x100);       tx_str(",");
+        tx_int((int32)r[i].rate_raw_x10);   tx_str(",");
+        tx_int((int32)r[i].rate_x10);       tx_str(",");
+        tx_int((int32)r[i].u_prev);         tx_str(",");
+        tx_int((int32)r[i].u_cmd);          tx_str(",");
+        tx_int((int32)r[i].sl);             tx_str(",");
+        tx_int((int32)r[i].sr);             tx_str(",");
+        tx_int((int32)r[i].reason);         tx_str("\r\n");
+    }
+    tx_str("PULSE8 end\r\n");
+
+    balance_pulse_clear();
 }
 
 void tune_init(void)

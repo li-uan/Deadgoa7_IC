@@ -11,5 +11,6 @@ void tune_poll(void);
 
 /* 主动发一帧遥测（主循环按 100ms 调一次） */
 void tune_send_telemetry(void);
+void tune_pulse_dump(void);
 
 #endif

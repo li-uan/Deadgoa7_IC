@@ -21,6 +21,8 @@ int core0_main(void)
 
     while (TRUE)
     {
+        tune_pulse_dump();          /* TEST_MODE=8 数据走无线口 */
+
         tune_poll();                // 解析上位机命令：P300 / D8 / Z2.5 / ?
 
         if (++loop_cnt >= 10)       // 100ms

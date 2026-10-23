@@ -41,6 +41,29 @@ uint8 balance_get_fault(void);
 
 /* ’Ô∂œ“£≤‚ */
 float balance_get_rate(void);
+
+/* ---- TEST_MODE=8 ¬ˆ≥Â ‘—È ---- */
+void  balance_set_pulse_duty(float v);
+float balance_get_pulse_duty(void);
+uint8 balance_pulse_is_done(void);
+void  balance_pulse_dump(void);
+
+typedef struct {
+    uint16 t_ms;
+    uint8  phase;
+    int16  ang_x100;
+    int16  rate_raw_x10;
+    int16  rate_x10;
+    int16  u_prev;
+    int16  u_cmd;
+    int16  sl;
+    int16  sr;
+    uint8  reason;
+} balance_pulse_row_t;
+
+uint16 balance_pulse_row_count(void);
+const balance_pulse_row_t *balance_pulse_rows(void);
+void   balance_pulse_clear(void);
 uint8 balance_get_test_mode(void);
 const char *balance_get_build(void);
 

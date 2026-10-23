@@ -25,10 +25,21 @@ static uint16 g_runaway_cnt = 0;
 static uint16 g_imu0_cnt    = 0;
 static uint16 g_run_ms      = 0;
 static uint16 g_start_cnt   = 0;
+static float  g_bias_sum   = 0.0f;   /* 零偏累加 */
+static float  g_gyro_bias  = 0.0f;   /* 陀螺零偏（°/s） */
+static uint16 g_bias_cnt   = 0;
 static uint8  g_speed_div   = 0;        /* 速度环分频计数 */
 static uint8  g_fault       = 0;        /* 0无 1急停 2摔倒 3堵转 4失控 5IMU掉线 */
 
-int16 g_enc_dbg[4] = {0, 0, 0, 0};      /* TEST_MODE=6 时打印 4 路编码器 */
+int16 g_enc_dbg[4] = {0, 0, 0, 0};
+
+/* ---- TEST_MODE=8 脉冲试验 ---- */
+static float  g_pulse_duty = PULSE_TEST_DUTY;   /* 本次施加的输入，可用串口 X 改 */
+#if (TEST_MODE == 8)
+static balance_pulse_row_t g_pulse[PULSE_REC_N];
+static uint16 g_pulse_cnt  = 0;
+static uint8  g_pulse_done = 0;
+#endif
 
 /* 运行时可调参数（无线串口可以改） */
 static float  g_kp          = BALANCE_KP;
@@ -272,20 +283,28 @@ void balance_control_isr(void)
     imu_read_tilt_rate(&tilt_rate, &yaw_rate);
     acc_ang = imu_acc_angle();
 
+    /* 上电静止标定：采样 GYRO_BIAS_SAMPLES 次求陀螺零偏，期间电机不动 */
+    if (g_bias_cnt < GYRO_BIAS_SAMPLES)
+    {
+        g_bias_cnt++;
+        g_bias_sum += tilt_rate;
+        g_gyro_bias = g_bias_sum / (float)g_bias_cnt;
+
+        g_angle     = acc_ang;      /* 用加速度角兜底 */
+        g_gyro_rate = 0.0f;
+        g_gyro_yaw  = 0.0f;
+        motor_stop();
+        return;
+    }
+
+    /* 先扣零偏，再进滤波（顺序不能反，否则零偏会被滤波吃掉） */
+    tilt_rate -= g_gyro_bias;
+    yaw_rate  -= g_gyro_bias;
+
     g_gyro_rate += GYRO_LPF_ALPHA * (tilt_rate - g_gyro_rate);
     g_gyro_yaw  += GYRO_LPF_ALPHA * (yaw_rate  - g_gyro_yaw);
 
     g_angle = 0.98f * (g_angle + g_gyro_rate * CTRL_DT) + 0.02f * acc_ang;
-
-    /* 上电前 100ms 用加速度角初始化 */
-    if (g_start_cnt < 20)
-    {
-        g_start_cnt++;
-        g_angle = acc_ang;
-        g_gyro_rate = 0.0f;
-        motor_stop();
-        return;
-    }
 
     /* ---------- 2. 急停按键 ---------- */
     {
@@ -311,6 +330,109 @@ void balance_control_isr(void)
             g_key_cnt = 0;
         }
     }
+
+#if (TEST_MODE == 8)
+    {
+        /* 单次短脉冲极性试验：每次只施加一种输入，结束后锁定 */
+        static uint8  s_phase = 0;      /* 0=等待扶正 1=采样 2=已锁定 */
+        static uint16 s_tick  = 0;
+        static uint16 s_cnt   = 0;
+        int16  e_l, e_r, u_prev, u_cmd = 0;
+        uint16 t_ms;
+        uint8  ph, reason = 0;
+
+        if (s_phase == 2) { motor_stop(); return; }
+
+        if (s_phase == 0)
+        {
+            motor_stop();
+            if (fabsf(g_angle - g_zero) < PULSE_ARM_TOL &&
+                fabsf(g_gyro_rate) < PULSE_ARM_RATE)
+            {
+                if (++g_arm_cnt >= (ARM_HOLD_MS / CTRL_PERIOD_MS))
+                {
+                    g_arm_cnt = 0;
+                    s_tick    = 0;
+                    s_cnt     = 0;
+                    g_pulse_cnt = 0;
+                    s_phase   = 1;
+                }
+            }
+            else
+            {
+                g_arm_cnt = 0;
+            }
+            return;
+        }
+
+        t_ms = (uint16)(s_tick * CTRL_PERIOD_MS);
+
+        encoder_read(&e_l, &e_r);
+        g_sl = (float)e_l;
+        g_sr = (float)e_r;
+
+        u_prev = g_duty;
+
+        if (t_ms < PULSE_PRE_MS)
+        {
+            ph = 0;
+            u_cmd = 0;
+        }
+        else if (t_ms < (PULSE_PRE_MS + PULSE_ON_MS))
+        {
+            ph = 1;
+            u_cmd = (int16)g_pulse_duty;
+        }
+        else if (t_ms < (PULSE_PRE_MS + PULSE_ON_MS + PULSE_POST_MS))
+        {
+            ph = 2;
+            u_cmd = 0;
+        }
+        else
+        {
+            ph = 3;
+            u_cmd = 0;
+        }
+
+        /* 中止：倾角越界 / 急停按下 */
+        if (fabsf(g_angle - g_zero) > PULSE_ANGLE_LIMIT) reason = 1;
+        if (g_key_cnt != 0U)                             reason = 2;
+        if (reason != 0U) u_cmd = 0;
+
+        if (s_cnt < PULSE_REC_N)
+        {
+            g_pulse[s_cnt].t_ms         = t_ms;
+            g_pulse[s_cnt].phase        = ph;
+            g_pulse[s_cnt].ang_x100     = (int16)(g_angle * 100.0f);
+            g_pulse[s_cnt].rate_raw_x10 = (int16)(tilt_rate * 10.0f);
+            g_pulse[s_cnt].rate_x10     = (int16)(g_gyro_rate * 10.0f);
+            g_pulse[s_cnt].u_prev       = u_prev;
+            g_pulse[s_cnt].u_cmd        = u_cmd;
+            g_pulse[s_cnt].sl           = e_l;
+            g_pulse[s_cnt].sr           = e_r;
+            g_pulse[s_cnt].reason       = reason;
+            s_cnt++;
+        }
+
+        g_duty = u_cmd;
+        motor_output(1, u_cmd);
+        motor_output(0, u_cmd);
+
+        s_tick++;
+
+        if (reason != 0U || s_cnt >= PULSE_REC_N)
+        {
+            g_duty = 0;
+            motor_stop();
+            s_phase      = 2;       /* 锁定：不自动重新解锁 */
+            g_pulse_cnt  = s_cnt;
+            g_pulse_done = 1;
+            g_armed      = 0;
+            g_fault      = 8;
+        }
+        return;
+    }
+#endif
 
 #if (TEST_MODE == 5)
     {
@@ -464,22 +586,15 @@ void balance_control_isr(void)
     speed_now = ((float)enc_l + (float)enc_r) * 0.5f;
     g_speed += 0.1f * (speed_now - g_speed);
 
+    /* ---------- 7b. 速度环：只做 P，叠加到目标角 ---------- */
     target_angle = g_zero;
+    g_corr = 0.0f;
+
 #if (SPEED_LOOP_ENABLE)
-    if (++g_speed_div >= SPEED_LOOP_DIV)
-    {
-        float speed_err;
-
-        g_speed_div = 0;
-
-        speed_err = g_speed - SPEED_TARGET;
-        g_speed_i += g_ski * speed_err * SPEED_DT;
-        g_speed_i = clampf(g_speed_i, -SPEED_I_LIMIT, SPEED_I_LIMIT);
-
-        g_corr = g_skp * speed_err + g_speed_i;
-    }
+    g_corr = g_skp * (g_speed - SPEED_TARGET);
     target_angle += g_speed_sign * g_corr;
 #endif
+
     target_angle = clampf(target_angle, g_zero - TARGET_ANGLE_MAX, g_zero + TARGET_ANGLE_MAX);
     g_target = target_angle;
 
@@ -600,3 +715,21 @@ float balance_get_speed_ki(void)      { return g_ski; }
 float balance_get_rate(void) { return g_gyro_rate; }
 uint8 balance_get_test_mode(void) { return (uint8)TEST_MODE; }
 const char *balance_get_build(void) { return "DIAG-20261023-A"; }
+
+/* ===================== TEST_MODE=8 数据导出 ===================== */
+void  balance_set_pulse_duty(float v) { g_pulse_duty = v; }
+float balance_get_pulse_duty(void)    { return g_pulse_duty; }
+
+#if (TEST_MODE == 8)
+uint8  balance_pulse_is_done(void)    { return g_pulse_done; }
+uint16 balance_pulse_row_count(void)  { return g_pulse_cnt; }
+const balance_pulse_row_t *balance_pulse_rows(void) { return g_pulse; }
+void   balance_pulse_clear(void)      { g_pulse_done = 0; }
+void   balance_pulse_dump(void)       { }
+#else
+uint8  balance_pulse_is_done(void)    { return 0; }
+uint16 balance_pulse_row_count(void)  { return 0; }
+const balance_pulse_row_t *balance_pulse_rows(void) { return 0; }
+void   balance_pulse_clear(void)      { }
+void   balance_pulse_dump(void)       { }
+#endif

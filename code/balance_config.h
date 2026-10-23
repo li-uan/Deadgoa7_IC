@@ -35,7 +35,7 @@
 #define MOTOR_DUTY_MAX          (6000)
 
 /* 电机死区：占空比低于这个值时轮子转不动，因此只要需要动就给到这个值 */
-#define MOTOR_DEADZONE          (0)
+#define MOTOR_DEADZONE          (150)
 
 /* ---------------- 2. 编码器 ---------------- */
 /* 逐飞的编码器编号和引脚是绑定的，见 E07_encoder_demo */
@@ -62,16 +62,31 @@
 #define CTRL_PERIOD_MS          (5)     /* 5ms = 200Hz，新手够用 */
 
 /* ---------------- 5. 直立环参数（先都从 0 开始，按文档一步步加） ---------------- */
-#define BALANCE_ANGLE_ZERO      (2.10f) /* 平地静止实测值（符号翻转后） */
+#define BALANCE_ANGLE_ZERO      (1.30f) /* 平地静止实测值（符号翻转后） */
 #define BALANCE_KP              (650.0f)  /* 建议从 120 开始，每次加 40 */
 #define BALANCE_KD              (50.0f)  /* 建议从 8 开始，每次加 4 */
 
 /* 角速度低通系数（0~1，越小越平滑但越滞后） */
 #define GYRO_LPF_ALPHA          (0.5f)
 
+/* 上电静止采样的次数，用来测陀螺零偏（200 x 5ms = 1s） */
+#define GYRO_BIAS_SAMPLES       (200)
+
+/* ---- TEST_MODE=8: 单次短脉冲极性试验 ----
+ * 序列(相对触发)：0~20ms 输出0 -> 20~60ms 施加选定输入 -> 60~200ms 输出0
+ * 每次运行只施加一种输入，结束后锁定，需重新上电再测。 */
+#define PULSE_TEST_DUTY         (800)    /* 首轮建议 +350 / -350 / 0 */
+#define PULSE_PRE_MS            (20)     /* 前段零输出 */
+#define PULSE_ON_MS             (40)     /* 脉冲宽度 */
+#define PULSE_POST_MS           (40)     /* 撤去后观察 */
+#define PULSE_REC_N             (40)     /* 缓存 40 帧 = 200ms */
+#define PULSE_ANGLE_LIMIT       (6.0f)
+#define PULSE_ARM_TOL          (1.5f)   /* 触发要求：离零点 1.5 度以内 */
+#define PULSE_ARM_RATE         (8.0f)   /* 触发要求：角速度 8 度/秒以内（近乎静止） */   /* 倾角越界立即归零并中止 */
+
 /* ---------------- 6. 速度环（第一版先关掉，站住之后再开） ---------------- */
 #define SPEED_LOOP_ENABLE       (1)
-#define SPEED_KP                (0.01f)
+#define SPEED_KP                (0.02f)
 #define SPEED_KI                (0.0f)
 #define SPEED_TARGET            (0.0f)  /* 目标速度（编码器计数/5ms） */
 #define SPEED_I_LIMIT           (300.0f)
@@ -79,11 +94,14 @@
 /* 速度环叠加符号：串口命令 S1 / S-1 可运行时改 */
 #define SPEED_SIGN              (-1.0f)
 
+/* 速度阻尼：输出 += SPEED_DAMP * 速度（正占空比=后驱=刹车） */
+#define SPEED_DAMP              (20.0f)
+
 /* 速度环分频：每 N 个 5ms 周期算一次（10 = 50ms） */
 #define SPEED_LOOP_DIV          (10)
 
 /* 防止暴冲：速度环输出的目标倾角最大偏离（度） */
-#define TARGET_ANGLE_MAX        (2.0f)
+#define TARGET_ANGLE_MAX        (2.5f)
 
 /* ---------------- 7. 转向/差速（第一版先关掉） ---------------- */
 #define YAW_DAMP_ENABLE         (0)
