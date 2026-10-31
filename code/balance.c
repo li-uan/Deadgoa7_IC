@@ -39,6 +39,16 @@ static uint8  g_calib_ok    = 0;        /* 零偏标定是否通过静止检查 */
 static float  g_bias_min    = 0.0f;     /* 标定期内角速度最小值 */
 static float  g_bias_max    = 0.0f;     /* 标定期内角速度最大值 */
 static float  g_raw_out     = 0.0f;     /* 限幅前的原始 PD 请求 */
+static uint16 g_innov_rej   = 0;        /* 加速度修正被连续拒绝的周期数 */
+
+/* ---- 加速度污染诊断记录（运行时 A1 开启） ---- */
+#define ACC_REC_N               (800)          /* 800 行 x 5ms = 4 秒 */
+static balance_acc_row_t g_acc_rows[ACC_REC_N];
+static uint16 g_acc_cnt   = 0;
+static uint8  g_acc_done  = 0;
+static uint8  g_acc_started = 0;   /* 检测到运动后才开始记录 */
+static uint8  g_diag_mode = 0;
+
 
 int16 g_enc_dbg[4] = {0, 0, 0, 0};
 
@@ -370,14 +380,89 @@ void balance_control_isr(void)
     g_gyro_rate += GYRO_LPF_ALPHA * (tilt_rate - g_gyro_rate);
     g_gyro_yaw  += GYRO_LPF_ALPHA * (yaw_rate  - g_gyro_yaw);
 
-    /* 诊断：把互补滤波拆成"陀螺预测 + 加速度计修正"，只记录不参与控制 */
+    /* 互补滤波：陀螺预测 + 加速度计修正（带创新门控）
+     * 平移加速时加速度计会给出虚假倾角（实测偏差可达 27°），
+     * 若直接按 0.02 灌入，融合角会被拖走并形成正反馈。 */
     {
         float gyro_pred = g_angle + g_gyro_rate * CTRL_DT;
+        float innov     = acc_ang - gyro_pred;
 
-        g_acc_ang    = acc_ang;
-        g_acc_corr   = 0.02f * (acc_ang - gyro_pred);
-        g_angle      = gyro_pred + g_acc_corr;      /* 与原来 0.98/0.02 等价 */
-        g_gyro_angle += g_gyro_rate * CTRL_DT;      /* 纯陀螺积分，无修正 */
+        g_acc_ang = acc_ang;
+
+        if (innov > ACC_INNOV_GATE_DEG || innov < -ACC_INNOV_GATE_DEG)
+        {
+            if (g_innov_rej < 60000) g_innov_rej++;
+
+            /* 长时间持续拒绝 → 改为慢速收敛，防止融合角永久不纠偏 */
+            if (g_innov_rej > (uint16)ACC_INNOV_REJECT_MAX)
+            {
+                g_acc_corr = 0.002f * innov;
+            }
+            else
+            {
+                g_acc_corr = 0.0f;
+            }
+        }
+        else
+        {
+            g_innov_rej = 0;
+            g_acc_corr  = 0.02f * innov;
+        }
+
+        g_angle       = gyro_pred + g_acc_corr;
+        g_gyro_angle += g_gyro_rate * CTRL_DT;       /* 纯陀螺积分，无修正 */
+    }
+
+    /* 加速度污染诊断：强制停机，只记录原始量，不进入任何控制律 */
+    if (g_diag_mode)
+    {
+        /* 自动触发：出现明显转动或加速度角突变才开始记录，
+         * 避免按下 A1 后静止的几秒把缓存用光 */
+        if (!g_acc_started)
+        {
+            float dr = g_gyro_rate;
+            float da = g_acc_ang - g_angle;
+
+            if (dr > 3.0f || dr < -3.0f || da > 1.0f || da < -1.0f)
+            {
+                g_acc_started = 1U;
+            }
+            else
+            {
+                g_armed   = 0U;
+                g_arm_cnt = 0U;
+                motor_stop();
+                return;
+            }
+        }
+
+        if (g_acc_cnt < ACC_REC_N)
+        {
+            int16 e_l = encoder_get_count(ENC_L);
+            int16 e_r = encoder_get_count(ENC_R);
+            encoder_clear_count(ENC_L);
+            encoder_clear_count(ENC_R);
+
+            g_acc_rows[g_acc_cnt].t_ms      = (uint16)(g_acc_cnt * CTRL_PERIOD_MS);
+            g_acc_rows[g_acc_cnt].ang_x100  = (int16)(g_angle * 100.0f);
+            g_acc_rows[g_acc_cnt].aa_x100   = (int16)(g_acc_ang * 100.0f);
+            g_acc_rows[g_acc_cnt].ga_x100   = (int16)(g_gyro_angle * 100.0f);
+            g_acc_rows[g_acc_cnt].ac_x1000  = (int16)(g_acc_corr * 1000.0f);
+            g_acc_rows[g_acc_cnt].rate_x10  = (int16)(g_gyro_rate * 10.0f);
+            g_acc_rows[g_acc_cnt].ax_raw    = imu660rc_acc_x;
+            g_acc_rows[g_acc_cnt].ay_raw    = imu660rc_acc_y;
+            g_acc_rows[g_acc_cnt].az_raw    = imu660rc_acc_z;
+            g_acc_rows[g_acc_cnt].sl        = e_l;
+            g_acc_rows[g_acc_cnt].sr        = e_r;
+
+            g_acc_cnt++;
+            if (g_acc_cnt >= ACC_REC_N) g_acc_done = 1U;
+        }
+
+        g_armed = 0U;
+        g_arm_cnt = 0U;
+        motor_stop();
+        return;
     }
 
     /* ---------- 2. 急停按键 ---------- */
@@ -844,6 +929,8 @@ void  balance_restart_gyro_calib(void)
     g_bias_max   = 0.0f;
     g_calib_ok   = 0;
 
+    g_innov_rej  = 0;
+
     g_need_rearm = 1U;          /* 标定结束后需要显式 R 才能重新使能 */
     g_fault      = 0;
 
@@ -869,8 +956,30 @@ uint8 balance_clear_rearm(void)
     g_raw_out     = 0.0f;
     return 1U;
 }
+void  balance_set_diag(uint8 mode)
+{
+    g_armed   = 0U;
+    g_arm_cnt = 0U;
+    motor_stop();
+
+    g_acc_cnt     = 0;
+    g_acc_done    = 0;
+    g_acc_started = 0;
+    g_diag_mode   = (mode != 0U) ? 1U : 0U;
+}
+
+uint8  balance_diag_is_done(void)      { return g_acc_done; }
+uint16 balance_acc_row_count(void)     { return g_acc_cnt; }
+const balance_acc_row_t *balance_acc_rows(void) { return g_acc_rows; }
+
+void   balance_acc_clear(void)
+{
+    g_acc_cnt  = 0;
+    g_acc_done = 0;
+}
+
 uint8 balance_get_test_mode(void) { return (uint8)TEST_MODE; }
-const char *balance_get_build(void) { return "DIAG-20261030-M"; }
+const char *balance_get_build(void) { return "DIAG-20261031-C"; }
 
 /* ===================== TEST_MODE=8 数据导出 ===================== */
 void  balance_set_pulse_duty(float v) { g_pulse_duty = v; }

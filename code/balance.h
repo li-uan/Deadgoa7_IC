@@ -75,6 +75,27 @@ uint16 balance_pulse_row_count(void);
 const balance_pulse_row_t *balance_pulse_rows(void);
 void   balance_pulse_clear(void);
 uint8 balance_get_test_mode(void);
+
+/* ---- 加速度污染诊断记录（电机停转，只采不控） ---- */
+typedef struct {
+    uint16 t_ms;
+    int16  ang_x100;
+    int16  aa_x100;
+    int16  ga_x100;
+    int16  ac_x1000;
+    int16  rate_x10;
+    int16  ax_raw;
+    int16  ay_raw;
+    int16  az_raw;
+    int16  sl;
+    int16  sr;
+} balance_acc_row_t;
+
+void   balance_set_diag(uint8 mode);     /* 1=开始记录(电机停转) 0=退出 */
+uint8  balance_diag_is_done(void);       /* 缓存已满 */
+uint16 balance_acc_row_count(void);
+const balance_acc_row_t *balance_acc_rows(void);
+void   balance_acc_clear(void);
 const char *balance_get_build(void);
 
 #endif

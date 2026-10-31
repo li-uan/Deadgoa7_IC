@@ -165,6 +165,14 @@ static void handle_line(char *line)
     {
         if (parse_float(&line[1], &v)) { balance_set_pulse_duty(v); tx_str("OK X\r\n"); }
     }
+    else if (cmd == 'A' || cmd == 'a')
+    {
+        if (parse_float(&line[1], &v))
+        {
+            if (v >= 1.0f) { balance_set_diag(1); tx_str("OK A1 (record, motors OFF)\r\n"); }
+            else           { balance_set_diag(0); tx_str("OK A0 (diag off)\r\n"); }
+        }
+    }
     else if (cmd == 'R' || cmd == 'r')
     {
         if (balance_clear_rearm()) tx_str("OK R (rearm allowed)\r\n");
@@ -181,10 +189,47 @@ static void handle_line(char *line)
     }
 }
 
+/* 加速度污染诊断：缓存满后一次性打印 CSV */
+static void acc_dump(void)
+{
+    uint16 i, n;
+    const balance_acc_row_t *r;
+
+    if (!balance_diag_is_done()) return;
+
+    r = balance_acc_rows();
+    n = balance_acc_row_count();
+
+    tx_str("ACCREC n=");
+    tx_int((int32)n);
+    tx_str("\r\n");
+    tx_str("t_ms,ang_x100,aa_x100,ga_x100,ac_x1000,rate_x10,ax,ay,az,sl,sr\r\n");
+
+    for (i = 0; i < n; i++)
+    {
+        tx_int((int32)r[i].t_ms);      tx_str(",");
+        tx_int((int32)r[i].ang_x100);  tx_str(",");
+        tx_int((int32)r[i].aa_x100);   tx_str(",");
+        tx_int((int32)r[i].ga_x100);   tx_str(",");
+        tx_int((int32)r[i].ac_x1000);  tx_str(",");
+        tx_int((int32)r[i].rate_x10);  tx_str(",");
+        tx_int((int32)r[i].ax_raw);    tx_str(",");
+        tx_int((int32)r[i].ay_raw);    tx_str(",");
+        tx_int((int32)r[i].az_raw);    tx_str(",");
+        tx_int((int32)r[i].sl);        tx_str(",");
+        tx_int((int32)r[i].sr);        tx_str("\r\n");
+    }
+    tx_str("ACCREC end\r\n");
+
+    balance_acc_clear();
+}
+
 void tune_pulse_dump(void)
 {
     uint16 i, n;
     const balance_pulse_row_t *r;
+
+    acc_dump();
 
     if (!balance_pulse_is_done()) return;
 
