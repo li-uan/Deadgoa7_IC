@@ -2,27 +2,27 @@ IfxPort_cfg.o :	../libraries/infineon_libraries/iLLD/TC26B/Tricore/_Impl/IfxPort
 ../libraries/infineon_libraries/iLLD/TC26B/Tricore/_Impl/IfxPort_cfg.c :
 IfxPort_cfg.o :	..\libraries\infineon_libraries\iLLD\TC26B\Tricore\_Impl\IfxPort_cfg.h
 ..\libraries\infineon_libraries\iLLD\TC26B\Tricore\_Impl\IfxPort_cfg.h :
-IfxPort_cfg.o :	"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\IfxCpu_Intrinsics.h"
-"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\IfxCpu_Intrinsics.h" :
-IfxPort_cfg.o :	"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\Ifx_Types.h"
-"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\Ifx_Types.h" :
-IfxPort_cfg.o :	"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Platform\Tricore\Compilers\Compilers.h"
-"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Platform\Tricore\Compilers\Compilers.h" :
-IfxPort_cfg.o :	"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Configurations\Ifx_Cfg.h"
-"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Configurations\Ifx_Cfg.h" :
-IfxPort_cfg.o :	"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Platform\Tricore\Compilers\CompilerTasking.h"
-"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Platform\Tricore\Compilers\CompilerTasking.h" :
+IfxPort_cfg.o :	"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\IfxCpu_Intrinsics.h"
+"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\IfxCpu_Intrinsics.h" :
+IfxPort_cfg.o :	"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\Ifx_Types.h"
+"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\Ifx_Types.h" :
+IfxPort_cfg.o :	"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Platform\Tricore\Compilers\Compilers.h"
+"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Platform\Tricore\Compilers\Compilers.h" :
+IfxPort_cfg.o :	"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Configurations\Ifx_Cfg.h"
+"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Configurations\Ifx_Cfg.h" :
+IfxPort_cfg.o :	"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Platform\Tricore\Compilers\CompilerTasking.h"
+"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Platform\Tricore\Compilers\CompilerTasking.h" :
 IfxPort_cfg.o :	"D:\Software\ADS\AURIX-Studio-1.10.40\tools\Compilers\Tasking_1.1r8\ctc\include\stddef.h"
 "D:\Software\ADS\AURIX-Studio-1.10.40\tools\Compilers\Tasking_1.1r8\ctc\include\stddef.h" :
-IfxPort_cfg.o :	"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\Platform_Types.h"
-"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\Platform_Types.h" :
-IfxPort_cfg.o :	"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\Ifx_TypesTasking.h"
-"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\Ifx_TypesTasking.h" :
-IfxPort_cfg.o :	"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\IfxCpu_IntrinsicsTasking.h"
-"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\IfxCpu_IntrinsicsTasking.h" :
-IfxPort_cfg.o :	"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Sfr\\TC26B\\_Reg\IfxPort_reg.h"
-"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Sfr\\TC26B\\_Reg\IfxPort_reg.h" :
-IfxPort_cfg.o :	"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Sfr\\TC26B\\_Reg\IfxPort_regdef.h"
-"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Sfr\\TC26B\\_Reg\IfxPort_regdef.h" :
-IfxPort_cfg.o :	"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Sfr\\TC26B\\_Reg\Ifx_TypesReg.h"
-"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Sfr\\TC26B\\_Reg\Ifx_TypesReg.h" :
+IfxPort_cfg.o :	"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\Platform_Types.h"
+"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\Platform_Types.h" :
+IfxPort_cfg.o :	"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\Ifx_TypesTasking.h"
+"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\Ifx_TypesTasking.h" :
+IfxPort_cfg.o :	"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\IfxCpu_IntrinsicsTasking.h"
+"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\IfxCpu_IntrinsicsTasking.h" :
+IfxPort_cfg.o :	"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Sfr\\TC26B\\_Reg\IfxPort_reg.h"
+"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Sfr\\TC26B\\_Reg\IfxPort_reg.h" :
+IfxPort_cfg.o :	"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Sfr\\TC26B\\_Reg\IfxPort_regdef.h"
+"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Sfr\\TC26B\\_Reg\IfxPort_regdef.h" :
+IfxPort_cfg.o :	"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Sfr\\TC26B\\_Reg\Ifx_TypesReg.h"
+"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Sfr\\TC26B\\_Reg\Ifx_TypesReg.h" :

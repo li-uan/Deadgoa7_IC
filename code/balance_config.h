@@ -28,14 +28,17 @@
 #define MOTOR_R_DIR             (P21_4)
 
 /* 实测轮子转向反了就改成 1 */
-#define MOTOR_L_INVERT          (0)
-#define MOTOR_R_INVERT          (0)
+#define MOTOR_L_INVERT          (1)   /* 电机线已对调，方向需反相 */
+#define MOTOR_R_INVERT          (1)   /* 电机线已对调，方向需反相 */
 
 /* 最大输出占空比（0~10000），第一版先压到 6000，防摔 */
 #define MOTOR_DUTY_MAX          (6000)
+/* 诊断期输出限幅：0 = 不限制。
+ * 持续单向加速时用它把车速压住，方便观察 ang/ga，不影响控制方向。 */
+#define MOTOR_DUTY_CAP          (3000)
 
 /* 电机死区：占空比低于这个值时轮子转不动，因此只要需要动就给到这个值 */
-#define MOTOR_DEADZONE          (150)
+#define MOTOR_DEADZONE          (0)     /* 关闭死区补偿：旧版实测为 0，线性输出 */
 
 /* ---------------- 2. 编码器 ---------------- */
 /* 逐飞的编码器编号和引脚是绑定的，见 E07_encoder_demo */
@@ -62,15 +65,25 @@
 #define CTRL_PERIOD_MS          (5)     /* 5ms = 200Hz，新手够用 */
 
 /* ---------------- 5. 直立环参数（先都从 0 开始，按文档一步步加） ---------------- */
-#define BALANCE_ANGLE_ZERO      (1.30f) /* 平地静止实测值（符号翻转后） */
-#define BALANCE_KP              (650.0f)  /* 建议从 120 开始，每次加 40 */
+#define BALANCE_ANGLE_ZERO      (1.85f) /* 平地静止实测值（符号翻转后） */
+#define BALANCE_KP              (650.0f)   /* 保持 */  /* 建议从 120 开始，每次加 40 */
 #define BALANCE_KD              (50.0f)  /* 建议从 8 开始，每次加 4 */
 
 /* 角速度低通系数（0~1，越小越平滑但越滞后） */
 #define GYRO_LPF_ALPHA          (0.5f)
 
 /* 上电静止采样的次数，用来测陀螺零偏（200 x 5ms = 1s） */
-#define GYRO_BIAS_SAMPLES       (200)
+#define GYRO_BIAS_SAMPLES       (400)
+/* 标定异常判定：两轮车标定必须手持，只能拦截"明显异常"，不能要求完全静止
+ * 极差超过该值说明车在明显晃动（°/s） */
+#define CALIB_RATE_SPREAD_MAX   (12.0f)
+/* 平均零偏超过该值说明车在持续转动或传感器异常（°/s） */
+#define CALIB_MEAN_MAX          (30.0f)
+/* 在线改 Z 的缓变速率（°/每 5ms 周期）：0.01 -> 2°/s，禁止目标角阶跃 */
+#define ZERO_SLEW_PER_CYCLE     (0.01f)
+/* 超速保护：两轮平均速度超过该值并持续 OVERSPEED_TIME_MS 即停机（计数/5ms） */
+#define OVERSPEED_LIMIT         (120.0f)
+#define OVERSPEED_TIME_MS       (200)
 
 /* ---- TEST_MODE=8: 单次短脉冲极性试验 ----
  * 序列(相对触发)：0~20ms 输出0 -> 20~60ms 施加选定输入 -> 60~200ms 输出0
@@ -82,11 +95,11 @@
 #define PULSE_REC_N             (40)     /* 缓存 40 帧 = 200ms */
 #define PULSE_ANGLE_LIMIT       (6.0f)
 #define PULSE_ARM_TOL          (1.5f)   /* 触发要求：离零点 1.5 度以内 */
-#define PULSE_ARM_RATE         (8.0f)   /* 触发要求：角速度 8 度/秒以内（近乎静止） */   /* 倾角越界立即归零并中止 */
+#define PULSE_ARM_RATE         (1.0f)   /* 触发要求：角速度 8 度/秒以内（近乎静止） */   /* 倾角越界立即归零并中止 */
 
 /* ---------------- 6. 速度环（第一版先关掉，站住之后再开） ---------------- */
 #define SPEED_LOOP_ENABLE       (1)
-#define SPEED_KP                (0.02f)
+#define SPEED_KP                (0.0f)
 #define SPEED_KI                (0.0f)
 #define SPEED_TARGET            (0.0f)  /* 目标速度（编码器计数/5ms） */
 #define SPEED_I_LIMIT           (300.0f)
@@ -137,7 +150,7 @@
 
 /* ---------------- 11. 故障保护 ---------------- */
 /* 堵转：输出大于阈值、但两个编码器 300ms 内都没动 -> 停机 */
-#define STALL_DUTY_TH           (2500)
+#define STALL_DUTY_TH           (1200)  /* 必须低于 MOTOR_DUTY_CAP，否则永不触发 */
 #define STALL_TIME_MS           (300)
 
 /* 失控：倾角超过 20° 持续 800ms（PD 拉不回来）-> 停机 */

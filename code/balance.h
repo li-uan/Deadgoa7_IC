@@ -41,6 +41,13 @@ uint8 balance_get_fault(void);
 
 /* 诊断遥测 */
 float balance_get_rate(void);
+float balance_get_acc_ang(void);
+float balance_get_gyro_angle(void);
+float balance_get_acc_corr(void);
+float balance_get_gyro_bias(void);
+void  balance_restart_gyro_calib(void);
+float balance_get_raw_out(void);      /* 限幅前原始 PD 请求 */
+uint8 balance_clear_rearm(void);      /* 故障后显式允许重新启动；返回 0 表示被拒绝 */
 
 /* ---- TEST_MODE=8 脉冲试验 ---- */
 void  balance_set_pulse_duty(float v);
@@ -59,6 +66,9 @@ typedef struct {
     int16  sl;
     int16  sr;
     uint8  reason;
+    int16  acc_ang_x100;
+    int16  gyro_angle_x100;
+    int16  acc_corr_x100;
 } balance_pulse_row_t;
 
 uint16 balance_pulse_row_count(void);

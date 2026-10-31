@@ -2,8 +2,8 @@ zf_device_virtual_oscilloscope.o :	../libraries/zf_device/zf_device_virtual_osci
 ../libraries/zf_device/zf_device_virtual_oscilloscope.c :
 zf_device_virtual_oscilloscope.o :	..\libraries\zf_device\zf_device_virtual_oscilloscope.h
 ..\libraries\zf_device\zf_device_virtual_oscilloscope.h :
-zf_device_virtual_oscilloscope.o :	"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\zf_common\zf_common_typedef.h"
-"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\zf_common\zf_common_typedef.h" :
+zf_device_virtual_oscilloscope.o :	"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\zf_common\zf_common_typedef.h"
+"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\zf_common\zf_common_typedef.h" :
 zf_device_virtual_oscilloscope.o :	"D:\Software\ADS\AURIX-Studio-1.10.40\tools\Compilers\Tasking_1.1r8\ctc\include\math.h"
 "D:\Software\ADS\AURIX-Studio-1.10.40\tools\Compilers\Tasking_1.1r8\ctc\include\math.h" :
 zf_device_virtual_oscilloscope.o :	"D:\Software\ADS\AURIX-Studio-1.10.40\tools\Compilers\Tasking_1.1r8\ctc\include\typeinfo.h"
@@ -18,19 +18,19 @@ zf_device_virtual_oscilloscope.o :	"D:\Software\ADS\AURIX-Studio-1.10.40\tools\C
 "D:\Software\ADS\AURIX-Studio-1.10.40\tools\Compilers\Tasking_1.1r8\ctc\include\string.h" :
 zf_device_virtual_oscilloscope.o :	"D:\Software\ADS\AURIX-Studio-1.10.40\tools\Compilers\Tasking_1.1r8\ctc\include\stdlib.h"
 "D:\Software\ADS\AURIX-Studio-1.10.40\tools\Compilers\Tasking_1.1r8\ctc\include\stdlib.h" :
-zf_device_virtual_oscilloscope.o :	"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\\Cpu\\Std\ifx_types.h"
-"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\\Cpu\\Std\ifx_types.h" :
-zf_device_virtual_oscilloscope.o :	"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Platform\Tricore\Compilers\Compilers.h"
-"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Platform\Tricore\Compilers\Compilers.h" :
-zf_device_virtual_oscilloscope.o :	"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Configurations\Ifx_Cfg.h"
-"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Configurations\Ifx_Cfg.h" :
-zf_device_virtual_oscilloscope.o :	"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Platform\Tricore\Compilers\CompilerTasking.h"
-"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Platform\Tricore\Compilers\CompilerTasking.h" :
+zf_device_virtual_oscilloscope.o :	"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\\Cpu\\Std\ifx_types.h"
+"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\\Cpu\\Std\ifx_types.h" :
+zf_device_virtual_oscilloscope.o :	"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Platform\Tricore\Compilers\Compilers.h"
+"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Platform\Tricore\Compilers\Compilers.h" :
+zf_device_virtual_oscilloscope.o :	"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Configurations\Ifx_Cfg.h"
+"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Configurations\Ifx_Cfg.h" :
+zf_device_virtual_oscilloscope.o :	"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Platform\Tricore\Compilers\CompilerTasking.h"
+"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Platform\Tricore\Compilers\CompilerTasking.h" :
 zf_device_virtual_oscilloscope.o :	"D:\Software\ADS\AURIX-Studio-1.10.40\tools\Compilers\Tasking_1.1r8\ctc\include\stddef.h"
 "D:\Software\ADS\AURIX-Studio-1.10.40\tools\Compilers\Tasking_1.1r8\ctc\include\stddef.h" :
-zf_device_virtual_oscilloscope.o :	"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\\Cpu\\Std\Platform_Types.h"
-"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\\Cpu\\Std\Platform_Types.h" :
-zf_device_virtual_oscilloscope.o :	"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\\Cpu\\Std\Ifx_TypesTasking.h"
-"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\\Cpu\\Std\Ifx_TypesTasking.h" :
-zf_device_virtual_oscilloscope.o :	"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\\Cpu\\Std\PLATFORM_TYPES.H"
-"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\\Cpu\\Std\PLATFORM_TYPES.H" :
+zf_device_virtual_oscilloscope.o :	"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\\Cpu\\Std\Platform_Types.h"
+"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\\Cpu\\Std\Platform_Types.h" :
+zf_device_virtual_oscilloscope.o :	"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\\Cpu\\Std\Ifx_TypesTasking.h"
+"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\\Cpu\\Std\Ifx_TypesTasking.h" :
+zf_device_virtual_oscilloscope.o :	"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\\Cpu\\Std\PLATFORM_TYPES.H"
+"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\\Cpu\\Std\PLATFORM_TYPES.H" :

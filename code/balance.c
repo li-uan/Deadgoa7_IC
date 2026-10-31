@@ -22,14 +22,23 @@ static uint16 g_fall_cnt    = 0;
 static uint16 g_key_cnt     = 0;
 static uint16 g_stall_cnt   = 0;
 static uint16 g_runaway_cnt = 0;
+static uint16 g_overspeed_cnt = 0;
 static uint16 g_imu0_cnt    = 0;
 static uint16 g_run_ms      = 0;
 static uint16 g_start_cnt   = 0;
 static float  g_bias_sum   = 0.0f;   /* 零偏累加 */
-static float  g_gyro_bias  = 0.0f;   /* 陀螺零偏（°/s） */
+static float  g_gyro_bias  = 0.0f;
+static float  g_acc_ang    = 0.0f;   /* 诊断：本帧加速度计角 */
+static float  g_gyro_angle = 0.0f;   /* 诊断：纯陀螺积分角 */
+static float  g_acc_corr   = 0.0f;   /* 诊断：本帧加速度计修正量 */   /* 陀螺零偏（°/s） */
 static uint16 g_bias_cnt   = 0;
 static uint8  g_speed_div   = 0;        /* 速度环分频计数 */
-static uint8  g_fault       = 0;        /* 0无 1急停 2摔倒 3堵转 4失控 5IMU掉线 */
+static uint8  g_fault       = 0;        /* 0无 1急停 2摔倒 3堵转 4失控 5IMU掉线 6标定失败 */
+static uint8  g_need_rearm  = 0;        /* 正常上电不锁；仅故障或 B 之后置 1 */        /* 故障后必须显式重新启动（串口 R） */
+static uint8  g_calib_ok    = 0;        /* 零偏标定是否通过静止检查 */
+static float  g_bias_min    = 0.0f;     /* 标定期内角速度最小值 */
+static float  g_bias_max    = 0.0f;     /* 标定期内角速度最大值 */
+static float  g_raw_out     = 0.0f;     /* 限幅前的原始 PD 请求 */
 
 int16 g_enc_dbg[4] = {0, 0, 0, 0};
 
@@ -44,7 +53,8 @@ static uint8  g_pulse_done = 0;
 /* 运行时可调参数（无线串口可以改） */
 static float  g_kp          = BALANCE_KP;
 static float  g_kd          = BALANCE_KD;
-static float  g_zero        = BALANCE_ANGLE_ZERO;
+static float  g_zero        = BALANCE_ANGLE_ZERO;   /* 实际生效的零点（缓变后） */
+static float  g_zero_req    = BALANCE_ANGLE_ZERO;   /* 串口请求的零点 */
 static float  g_speed_sign  = SPEED_SIGN;
 static float  g_skp         = SPEED_KP;
 static float  g_ski         = SPEED_KI;
@@ -159,7 +169,22 @@ static void motor_stop(void)
 {
     motor_output(1, 0);
     motor_output(0, 0);
-    g_duty = 0;
+    g_duty    = 0;
+    g_raw_out = 0.0f;          /* 停机后 raw 不再是当前请求 */
+}
+
+/* 统一停机：切断输出 + 清运行状态 + 锁定，必须串口 R 才能重新使能 */
+static void ctrl_stop(uint8 fault_code)
+{
+    motor_stop();
+    g_speed      = 0.0f;
+    g_speed_i    = 0.0f;
+    g_corr       = 0.0f;
+    g_target     = g_zero;
+    g_armed      = 0U;
+    g_arm_cnt    = 0U;
+    g_need_rearm = 1U;
+    g_fault      = fault_code;
 }
 
 /* ===================== 初始化 ===================== */
@@ -290,11 +315,52 @@ void balance_control_isr(void)
         g_bias_sum += tilt_rate;
         g_gyro_bias = g_bias_sum / (float)g_bias_cnt;
 
-        g_angle     = acc_ang;      /* 用加速度角兜底 */
+        if (g_bias_cnt == 1U || tilt_rate < g_bias_min) g_bias_min = tilt_rate;
+        if (g_bias_cnt == 1U || tilt_rate > g_bias_max) g_bias_max = tilt_rate;
+
+        g_angle      = acc_ang;     /* 用加速度角兜底 */
+        g_gyro_angle = acc_ang;     /* 陀螺积分角同起点 */
         g_gyro_rate = 0.0f;
         g_gyro_yaw  = 0.0f;
+
+        if (g_bias_cnt >= GYRO_BIAS_SAMPLES)
+        {
+            /* 两轮车标定必须手持，极差类判据必然误伤，这里只拦截传感器级异常：
+             * 平均零偏过大说明陀螺在持续输出（接线异常 / 传感器故障 / 车在匀速转动）。
+             * 正常手持上电应远小于该阈值。 */
+            float mean = (g_gyro_bias < 0.0f) ? -g_gyro_bias : g_gyro_bias;
+
+            g_calib_ok = (mean < CALIB_MEAN_MAX) ? 1U : 0U;
+            if (!g_calib_ok) g_fault = 6U;
+        }
+
         motor_stop();
         return;
+    }
+
+    /* 标定未通过：停机等待重新标定（发 B）。仍然刷新角度诊断，便于判断原因 */
+    if (!g_calib_ok)
+    {
+        g_acc_ang    = acc_ang;
+        g_angle      = acc_ang;
+        g_gyro_angle = acc_ang;
+        g_gyro_rate  = 0.0f;
+        g_acc_corr   = 0.0f;
+        motor_stop();
+        return;
+    }
+
+    /* 零点缓变：未使能时直接跟随；使能中限制变化率，避免在线改 Z 造成目标角阶跃 */
+    if (!g_armed)
+    {
+        g_zero = g_zero_req;
+    }
+    else
+    {
+        float dz = g_zero_req - g_zero;
+        if (dz >  ZERO_SLEW_PER_CYCLE) dz =  ZERO_SLEW_PER_CYCLE;
+        if (dz < -ZERO_SLEW_PER_CYCLE) dz = -ZERO_SLEW_PER_CYCLE;
+        g_zero += dz;
     }
 
     /* 先扣零偏，再进滤波（顺序不能反，否则零偏会被滤波吃掉） */
@@ -304,7 +370,15 @@ void balance_control_isr(void)
     g_gyro_rate += GYRO_LPF_ALPHA * (tilt_rate - g_gyro_rate);
     g_gyro_yaw  += GYRO_LPF_ALPHA * (yaw_rate  - g_gyro_yaw);
 
-    g_angle = 0.98f * (g_angle + g_gyro_rate * CTRL_DT) + 0.02f * acc_ang;
+    /* 诊断：把互补滤波拆成"陀螺预测 + 加速度计修正"，只记录不参与控制 */
+    {
+        float gyro_pred = g_angle + g_gyro_rate * CTRL_DT;
+
+        g_acc_ang    = acc_ang;
+        g_acc_corr   = 0.02f * (acc_ang - gyro_pred);
+        g_angle      = gyro_pred + g_acc_corr;      /* 与原来 0.98/0.02 等价 */
+        g_gyro_angle += g_gyro_rate * CTRL_DT;      /* 纯陀螺积分，无修正 */
+    }
 
     /* ---------- 2. 急停按键 ---------- */
     {
@@ -317,11 +391,7 @@ void balance_control_isr(void)
             if (g_key_cnt < 1000) g_key_cnt++;
             if (g_key_cnt >= 3)
             {
-                g_armed = 0;
-                g_arm_cnt = 0;
-                g_speed_i = 0.0f;
-                g_fault = 1;
-                motor_stop();
+                ctrl_stop(1);
                 return;
             }
         }
@@ -355,6 +425,8 @@ void balance_control_isr(void)
                     s_tick    = 0;
                     s_cnt     = 0;
                     g_pulse_cnt = 0;
+                    encoder_clear_count(ENC_L);     /* 记录前清零，避免累积计数 */
+                    encoder_clear_count(ENC_R);
                     s_phase   = 1;
                 }
             }
@@ -411,6 +483,9 @@ void balance_control_isr(void)
             g_pulse[s_cnt].sl           = e_l;
             g_pulse[s_cnt].sr           = e_r;
             g_pulse[s_cnt].reason       = reason;
+            g_pulse[s_cnt].acc_ang_x100     = (int16)(g_acc_ang * 100.0f);
+            g_pulse[s_cnt].gyro_angle_x100  = (int16)(g_gyro_angle * 100.0f);
+            g_pulse[s_cnt].acc_corr_x100    = (int16)(g_acc_corr * 100.0f);
             s_cnt++;
         }
 
@@ -522,9 +597,7 @@ void balance_control_isr(void)
         if (g_imu0_cnt < 60000) g_imu0_cnt++;
         if (g_imu0_cnt > (IMU_ZERO_TIME_MS / CTRL_PERIOD_MS))
         {
-            g_armed = 0;
-            g_fault = 5;
-            motor_stop();
+            ctrl_stop(5);
             return;
         }
     }
@@ -536,14 +609,8 @@ void balance_control_isr(void)
     /* ---------- 5. 摔倒 ---------- */
     if (fabsf(g_angle - g_zero) > FALL_ANGLE)
     {
-        if (++g_fall_cnt > (FALL_HOLD_MS / CTRL_PERIOD_MS))
-        {
-            g_armed = 0;
-            g_arm_cnt = 0;
-            g_speed_i = 0.0f;
-            g_fault = 2;
-            motor_stop();
-        }
+        /* 一旦超限就停机并锁定：即使很快回到角度范围，也不允许自动恢复输出 */
+        ctrl_stop(2);
         return;
     }
     g_fall_cnt = 0;
@@ -551,6 +618,17 @@ void balance_control_isr(void)
     /* ---------- 6. 启动判定 ---------- */
     if (!g_armed)
     {
+        /* 故障后必须显式重新启动（串口发 R），避免松开急停就等于授权恢复驱动 */
+        if (g_need_rearm)
+        {
+            g_arm_cnt = 0;
+            g_speed   = 0.0f;
+            encoder_clear_count(ENC_L);
+            encoder_clear_count(ENC_R);
+            motor_stop();
+            return;
+        }
+
         if (fabsf(g_angle - g_zero) < ARM_ANGLE_TOL)
         {
             if (++g_arm_cnt >= (ARM_HOLD_MS / CTRL_PERIOD_MS))
@@ -562,6 +640,12 @@ void balance_control_isr(void)
                 g_corr = 0.0f;
                 g_run_ms = 0;
                 g_fault = 0;
+                /* 清掉上一次运行残留的保护计数，避免刚启动就误触发 */
+                g_fall_cnt = 0;
+                g_stall_cnt = 0;
+                g_runaway_cnt = 0;
+                g_overspeed_cnt = 0;
+                g_raw_out = 0.0f;
             }
         }
         else
@@ -573,6 +657,7 @@ void balance_control_isr(void)
          * arm 的第一帧会读到一个巨大的速度尖峰，把速度环带飞。 */
         encoder_clear_count(ENC_L);
         encoder_clear_count(ENC_R);
+        g_speed = 0.0f;
 
         motor_stop();
         return;
@@ -585,6 +670,21 @@ void balance_control_isr(void)
 
     speed_now = ((float)enc_l + (float)enc_r) * 0.5f;
     g_speed += 0.1f * (speed_now - g_speed);
+
+    /* 超速保护：只看轮速，不依赖倾角；持续超限即停机锁定 */
+    if (fabsf(g_speed) > OVERSPEED_LIMIT)
+    {
+        if (g_overspeed_cnt < 60000) g_overspeed_cnt++;
+        if (g_overspeed_cnt > (OVERSPEED_TIME_MS / CTRL_PERIOD_MS))
+        {
+            ctrl_stop(7);
+            return;
+        }
+    }
+    else
+    {
+        g_overspeed_cnt = 0;
+    }
 
     /* ---------- 7b. 速度环：只做 P，叠加到目标角 ---------- */
     target_angle = g_zero;
@@ -601,6 +701,7 @@ void balance_control_isr(void)
     /* ---------- 8. 直立 PD ---------- */
     err = g_angle - target_angle;
     out = g_kp * err + g_kd * g_gyro_rate;
+    g_raw_out = out;            /* 记录限幅前的原始请求，便于判断是否被截断 */
 
     /* ---------- 9. 转向差速（默认关闭） ---------- */
 #if (YAW_DAMP_ENABLE)
@@ -622,6 +723,11 @@ void balance_control_isr(void)
     if (out > 0.0f && out < (float)MOTOR_DEADZONE)          out = (float)MOTOR_DEADZONE;
     else if (out < 0.0f && out > -(float)MOTOR_DEADZONE)    out = -(float)MOTOR_DEADZONE;
 
+#if (MOTOR_DUTY_CAP > 0)
+    /* 诊断期限幅：限制最大输出，避免持续单向加速时车速过高 */
+    out = clampf(out, -(float)MOTOR_DUTY_CAP, (float)MOTOR_DUTY_CAP);
+#endif
+
     g_duty = (int16)out;
 
     motor_output(1, (int16)clampf(out + yaw_corr, -(float)MOTOR_DUTY_MAX, (float)MOTOR_DUTY_MAX));
@@ -633,9 +739,7 @@ void balance_control_isr(void)
         if (g_stall_cnt < 60000) g_stall_cnt++;
         if (g_stall_cnt > (STALL_TIME_MS / CTRL_PERIOD_MS))
         {
-            g_armed = 0;
-            g_fault = 3;
-            motor_stop();
+            ctrl_stop(3);
         }
     }
     else
@@ -648,9 +752,7 @@ void balance_control_isr(void)
         if (g_runaway_cnt < 60000) g_runaway_cnt++;
         if (g_runaway_cnt > (RUNAWAY_TIME_MS / CTRL_PERIOD_MS))
         {
-            g_armed = 0;
-            g_fault = 4;
-            motor_stop();
+            ctrl_stop(4);
         }
     }
     else
@@ -685,9 +787,9 @@ void balance_debug_print(void)
 }
 
 /* ===================== 运行时参数接口 ===================== */
-void  balance_set_kp(float v)   { g_kp = v; }
-void  balance_set_kd(float v)   { g_kd = v; }
-void  balance_set_zero(float v) { g_zero = v; }
+void  balance_set_kp(float v)   { g_kp = clampf(v, 0.0f, 3000.0f); }
+void  balance_set_kd(float v)   { g_kd = clampf(v, 0.0f, 500.0f); }
+void  balance_set_zero(float v) { g_zero_req = clampf(v, -30.0f, 30.0f); }
 
 float balance_get_kp(void)      { return g_kp; }
 float balance_get_kd(void)      { return g_kd; }
@@ -702,19 +804,73 @@ int16 balance_get_duty(void)    { return g_duty; }
 uint8 balance_is_armed(void)    { return g_armed; }
 uint8 balance_get_fault(void)   { return g_fault; }
 
-void  balance_set_speed_sign(float v) { g_speed_sign = v; }
+void  balance_set_speed_sign(float v) { g_speed_sign = (v < 0.0f) ? -1.0f : 1.0f; }
 float balance_get_speed_sign(void)    { return g_speed_sign; }
 float balance_get_target(void)        { return g_target; }
 
-void  balance_set_speed_kp(float v)   { g_skp = v; }
-void  balance_set_speed_ki(float v)   { g_ski = v; }
+void  balance_set_speed_kp(float v)   { g_skp = clampf(v, 0.0f, 1.0f); }
+void  balance_set_speed_ki(float v)   { g_ski = clampf(v, 0.0f, 1.0f); }
 float balance_get_speed_kp(void)      { return g_skp; }
 float balance_get_speed_ki(void)      { return g_ski; }
 
 /* 诊断遥测接口：只读，不改变平衡控制计算。 */
 float balance_get_rate(void) { return g_gyro_rate; }
+float balance_get_acc_ang(void)    { return g_acc_ang; }
+float balance_get_gyro_angle(void) { return g_gyro_angle; }
+float balance_get_acc_corr(void)   { return g_acc_corr; }
+float balance_get_gyro_bias(void)    { return g_gyro_bias; }
+void  balance_restart_gyro_calib(void)
+{
+    /* 先切驱动，再清状态，最后重新标定：不允许带着旧使能状态回到控制 */
+    g_armed      = 0;
+    g_arm_cnt    = 0;
+    g_run_ms     = 0;
+    g_speed      = 0.0f;
+    g_speed_i    = 0.0f;
+    g_corr       = 0.0f;
+    g_target     = g_zero;
+    g_zero_req   = g_zero;
+    g_raw_out    = 0.0f;
+    g_fall_cnt   = 0;
+    g_stall_cnt  = 0;
+    g_runaway_cnt= 0;
+
+    g_bias_cnt   = 0;
+    g_bias_sum   = 0.0f;
+    g_gyro_bias  = 0.0f;
+    g_gyro_angle = 0.0f;
+    g_gyro_rate  = 0.0f;
+    g_bias_min   = 0.0f;
+    g_bias_max   = 0.0f;
+    g_calib_ok   = 0;
+
+    g_need_rearm = 1U;          /* 标定结束后需要显式 R 才能重新使能 */
+    g_fault      = 0;
+
+    motor_stop();
+}
+
+float balance_get_raw_out(void) { return g_raw_out; }
+
+uint8 balance_clear_rearm(void)
+{
+    /* 标定未完成、或标定未通过时拒绝解锁，避免把真正的故障掩盖掉 */
+    if (g_bias_cnt < GYRO_BIAS_SAMPLES) return 0U;
+    if (!g_calib_ok)                    return 0U;
+
+    g_need_rearm  = 0U;
+    g_fault       = 0U;
+    g_arm_cnt     = 0U;
+    g_fall_cnt    = 0U;
+    g_stall_cnt   = 0U;
+    g_runaway_cnt = 0U;
+    g_overspeed_cnt = 0U;
+    g_speed       = 0.0f;
+    g_raw_out     = 0.0f;
+    return 1U;
+}
 uint8 balance_get_test_mode(void) { return (uint8)TEST_MODE; }
-const char *balance_get_build(void) { return "DIAG-20261023-A"; }
+const char *balance_get_build(void) { return "DIAG-20261030-M"; }
 
 /* ===================== TEST_MODE=8 数据导出 ===================== */
 void  balance_set_pulse_duty(float v) { g_pulse_duty = v; }

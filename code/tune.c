@@ -155,7 +155,7 @@ static void handle_line(char *line)
     }
     else if (cmd == 'W' || cmd == 'w')
     {
-        if (parse_float(&line[1], &v)) { balance_set_speed_ki(v); tx_str("OK W\r\n"); }
+        if (parse_float(&line[1], &v)) { balance_set_speed_ki(v); tx_str("OK W (KI not used, P-only)\r\n"); }
     }
     else if (cmd == 'S' || cmd == 's')
     {
@@ -164,6 +164,16 @@ static void handle_line(char *line)
     else if (cmd == 'X' || cmd == 'x')
     {
         if (parse_float(&line[1], &v)) { balance_set_pulse_duty(v); tx_str("OK X\r\n"); }
+    }
+    else if (cmd == 'R' || cmd == 'r')
+    {
+        if (balance_clear_rearm()) tx_str("OK R (rearm allowed)\r\n");
+        else                       tx_str("ERR R (calib not valid)\r\n");
+    }
+    else if (cmd == 'B' || cmd == 'b')
+    {
+        balance_restart_gyro_calib();
+        tx_str("OK B (hold still 2s)\r\n");
     }
     else if (cmd == '?')
     {
@@ -186,7 +196,7 @@ void tune_pulse_dump(void)
     tx_str(" n=");
     tx_int((int32)n);
     tx_str("\r\n");
-    tx_str("t_ms,phase,ang_x100,rate_raw_x10,rate_x10,u_prev,u_cmd,sl,sr,reason\r\n");
+    tx_str("t_ms,phase,ang_x100,rate_raw_x10,rate_x10,u_prev,u_cmd,sl,sr,reason,acc_ang_x100,gyro_angle_x100,acc_corr_x100\r\n");
 
     for (i = 0; i < n; i++)
     {
@@ -199,7 +209,10 @@ void tune_pulse_dump(void)
         tx_int((int32)r[i].u_cmd);          tx_str(",");
         tx_int((int32)r[i].sl);             tx_str(",");
         tx_int((int32)r[i].sr);             tx_str(",");
-        tx_int((int32)r[i].reason);         tx_str("\r\n");
+        tx_int((int32)r[i].reason);         tx_str(",");
+        tx_int((int32)r[i].acc_ang_x100);   tx_str(",");
+        tx_int((int32)r[i].gyro_angle_x100);tx_str(",");
+        tx_int((int32)r[i].acc_corr_x100);  tx_str("\r\n");
     }
     tx_str("PULSE8 end\r\n");
 
@@ -241,6 +254,7 @@ void tune_poll(void)
 void tune_send_telemetry(void)
 {
     float ang, kp, kd, zero, speed, sl, sr, corr, skp, ski, target, sign, rate;
+    float acc_ang_d, gyro_ang_d, acc_corr_d, bias_d, raw_d;
     int16 duty;
     uint8 fault, armed, mode;
     uint32 irq_state;
@@ -267,6 +281,11 @@ void tune_send_telemetry(void)
     armed = balance_is_armed();
     mode = balance_get_test_mode();
     rate = balance_get_rate();
+    acc_ang_d  = balance_get_acc_ang();
+    gyro_ang_d = balance_get_gyro_angle();
+    acc_corr_d = balance_get_acc_corr();
+    bias_d     = balance_get_gyro_bias();
+    raw_d      = balance_get_raw_out();
     interrupt_global_enable(irq_state);
 
     tx_str("$ang="); tx_float2(ang);
@@ -287,5 +306,10 @@ void tune_send_telemetry(void)
     tx_str(",rate="); tx_float2(rate);
     tx_str(",mode="); tx_int((int32)mode);
     tx_str(",build="); tx_str(balance_get_build());
-    tx_str("\r\n");
+    tx_str(",aa=");   tx_float2(acc_ang_d);
+    tx_str(",ga=");   tx_float2(gyro_ang_d);
+    tx_str(",ac=");   tx_float4(acc_corr_d);
+    tx_str(",gb=");   tx_float2(bias_d);
+    tx_str(",raw=");  tx_float2(raw_d);
+tx_str("\r\n");
 }

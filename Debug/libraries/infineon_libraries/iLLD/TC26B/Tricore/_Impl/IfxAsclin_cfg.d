@@ -2,23 +2,23 @@ IfxAsclin_cfg.o :	../libraries/infineon_libraries/iLLD/TC26B/Tricore/_Impl/IfxAs
 ../libraries/infineon_libraries/iLLD/TC26B/Tricore/_Impl/IfxAsclin_cfg.c :
 IfxAsclin_cfg.o :	..\libraries\infineon_libraries\iLLD\TC26B\Tricore\_Impl\IfxAsclin_cfg.h
 ..\libraries\infineon_libraries\iLLD\TC26B\Tricore\_Impl\IfxAsclin_cfg.h :
-IfxAsclin_cfg.o :	"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\Ifx_Types.h"
-"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\Ifx_Types.h" :
-IfxAsclin_cfg.o :	"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Platform\Tricore\Compilers\Compilers.h"
-"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Platform\Tricore\Compilers\Compilers.h" :
-IfxAsclin_cfg.o :	"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Configurations\Ifx_Cfg.h"
-"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Configurations\Ifx_Cfg.h" :
-IfxAsclin_cfg.o :	"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Platform\Tricore\Compilers\CompilerTasking.h"
-"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Platform\Tricore\Compilers\CompilerTasking.h" :
+IfxAsclin_cfg.o :	"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\Ifx_Types.h"
+"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\Ifx_Types.h" :
+IfxAsclin_cfg.o :	"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Platform\Tricore\Compilers\Compilers.h"
+"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Platform\Tricore\Compilers\Compilers.h" :
+IfxAsclin_cfg.o :	"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Configurations\Ifx_Cfg.h"
+"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Configurations\Ifx_Cfg.h" :
+IfxAsclin_cfg.o :	"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Platform\Tricore\Compilers\CompilerTasking.h"
+"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Platform\Tricore\Compilers\CompilerTasking.h" :
 IfxAsclin_cfg.o :	"D:\Software\ADS\AURIX-Studio-1.10.40\tools\Compilers\Tasking_1.1r8\ctc\include\stddef.h"
 "D:\Software\ADS\AURIX-Studio-1.10.40\tools\Compilers\Tasking_1.1r8\ctc\include\stddef.h" :
-IfxAsclin_cfg.o :	"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\Platform_Types.h"
-"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\Platform_Types.h" :
-IfxAsclin_cfg.o :	"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\Ifx_TypesTasking.h"
-"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\Ifx_TypesTasking.h" :
-IfxAsclin_cfg.o :	"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Sfr\\TC26B\\_Reg\IfxAsclin_reg.h"
-"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Sfr\\TC26B\\_Reg\IfxAsclin_reg.h" :
-IfxAsclin_cfg.o :	"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Sfr\\TC26B\\_Reg\IfxAsclin_regdef.h"
-"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Sfr\\TC26B\\_Reg\IfxAsclin_regdef.h" :
-IfxAsclin_cfg.o :	"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Sfr\\TC26B\\_Reg\Ifx_TypesReg.h"
-"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Sfr\\TC26B\\_Reg\Ifx_TypesReg.h" :
+IfxAsclin_cfg.o :	"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\Platform_Types.h"
+"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\Platform_Types.h" :
+IfxAsclin_cfg.o :	"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\Ifx_TypesTasking.h"
+"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\Ifx_TypesTasking.h" :
+IfxAsclin_cfg.o :	"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Sfr\\TC26B\\_Reg\IfxAsclin_reg.h"
+"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Sfr\\TC26B\\_Reg\IfxAsclin_reg.h" :
+IfxAsclin_cfg.o :	"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Sfr\\TC26B\\_Reg\IfxAsclin_regdef.h"
+"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Sfr\\TC26B\\_Reg\IfxAsclin_regdef.h" :
+IfxAsclin_cfg.o :	"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Sfr\\TC26B\\_Reg\Ifx_TypesReg.h"
+"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Sfr\\TC26B\\_Reg\Ifx_TypesReg.h" :

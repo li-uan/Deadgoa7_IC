@@ -2,21 +2,21 @@ IfxFlash_cfg.o :	../libraries/infineon_libraries/iLLD/TC26B/Tricore/_Impl/IfxFla
 ../libraries/infineon_libraries/iLLD/TC26B/Tricore/_Impl/IfxFlash_cfg.c :
 IfxFlash_cfg.o :	..\libraries\infineon_libraries\iLLD\TC26B\Tricore\_Impl\IfxFlash_cfg.h
 ..\libraries\infineon_libraries\iLLD\TC26B\Tricore\_Impl\IfxFlash_cfg.h :
-IfxFlash_cfg.o :	"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\IfxCpu_Intrinsics.h"
-"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\IfxCpu_Intrinsics.h" :
-IfxFlash_cfg.o :	"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\Ifx_Types.h"
-"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\Ifx_Types.h" :
-IfxFlash_cfg.o :	"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Platform\Tricore\Compilers\Compilers.h"
-"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Platform\Tricore\Compilers\Compilers.h" :
-IfxFlash_cfg.o :	"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Configurations\Ifx_Cfg.h"
-"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Configurations\Ifx_Cfg.h" :
-IfxFlash_cfg.o :	"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Platform\Tricore\Compilers\CompilerTasking.h"
-"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Platform\Tricore\Compilers\CompilerTasking.h" :
+IfxFlash_cfg.o :	"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\IfxCpu_Intrinsics.h"
+"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\IfxCpu_Intrinsics.h" :
+IfxFlash_cfg.o :	"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\Ifx_Types.h"
+"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\Ifx_Types.h" :
+IfxFlash_cfg.o :	"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Platform\Tricore\Compilers\Compilers.h"
+"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Platform\Tricore\Compilers\Compilers.h" :
+IfxFlash_cfg.o :	"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Configurations\Ifx_Cfg.h"
+"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Configurations\Ifx_Cfg.h" :
+IfxFlash_cfg.o :	"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Platform\Tricore\Compilers\CompilerTasking.h"
+"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Platform\Tricore\Compilers\CompilerTasking.h" :
 IfxFlash_cfg.o :	"D:\Software\ADS\AURIX-Studio-1.10.40\tools\Compilers\Tasking_1.1r8\ctc\include\stddef.h"
 "D:\Software\ADS\AURIX-Studio-1.10.40\tools\Compilers\Tasking_1.1r8\ctc\include\stddef.h" :
-IfxFlash_cfg.o :	"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\Platform_Types.h"
-"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\Platform_Types.h" :
-IfxFlash_cfg.o :	"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\Ifx_TypesTasking.h"
-"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\Ifx_TypesTasking.h" :
-IfxFlash_cfg.o :	"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\IfxCpu_IntrinsicsTasking.h"
-"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\IfxCpu_IntrinsicsTasking.h" :
+IfxFlash_cfg.o :	"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\Platform_Types.h"
+"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\Platform_Types.h" :
+IfxFlash_cfg.o :	"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\Ifx_TypesTasking.h"
+"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\Ifx_TypesTasking.h" :
+IfxFlash_cfg.o :	"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\IfxCpu_IntrinsicsTasking.h"
+"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\Cpu\Std\IfxCpu_IntrinsicsTasking.h" :

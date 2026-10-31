@@ -18,22 +18,22 @@ zf_common_function.o :	"D:\Software\ADS\AURIX-Studio-1.10.40\tools\Compilers\Tas
 "D:\Software\ADS\AURIX-Studio-1.10.40\tools\Compilers\Tasking_1.1r8\ctc\include\string.h" :
 zf_common_function.o :	"D:\Software\ADS\AURIX-Studio-1.10.40\tools\Compilers\Tasking_1.1r8\ctc\include\stdlib.h"
 "D:\Software\ADS\AURIX-Studio-1.10.40\tools\Compilers\Tasking_1.1r8\ctc\include\stdlib.h" :
-zf_common_function.o :	"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\\Cpu\\Std\ifx_types.h"
-"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\\Cpu\\Std\ifx_types.h" :
-zf_common_function.o :	"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Platform\Tricore\Compilers\Compilers.h"
-"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Platform\Tricore\Compilers\Compilers.h" :
-zf_common_function.o :	"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Configurations\Ifx_Cfg.h"
-"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Configurations\Ifx_Cfg.h" :
-zf_common_function.o :	"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Platform\Tricore\Compilers\CompilerTasking.h"
-"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Platform\Tricore\Compilers\CompilerTasking.h" :
+zf_common_function.o :	"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\\Cpu\\Std\ifx_types.h"
+"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\\Cpu\\Std\ifx_types.h" :
+zf_common_function.o :	"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Platform\Tricore\Compilers\Compilers.h"
+"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Platform\Tricore\Compilers\Compilers.h" :
+zf_common_function.o :	"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Configurations\Ifx_Cfg.h"
+"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Configurations\Ifx_Cfg.h" :
+zf_common_function.o :	"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Platform\Tricore\Compilers\CompilerTasking.h"
+"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\Infra\\Platform\Tricore\Compilers\CompilerTasking.h" :
 zf_common_function.o :	"D:\Software\ADS\AURIX-Studio-1.10.40\tools\Compilers\Tasking_1.1r8\ctc\include\stddef.h"
 "D:\Software\ADS\AURIX-Studio-1.10.40\tools\Compilers\Tasking_1.1r8\ctc\include\stddef.h" :
-zf_common_function.o :	"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\\Cpu\\Std\Platform_Types.h"
-"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\\Cpu\\Std\Platform_Types.h" :
-zf_common_function.o :	"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\\Cpu\\Std\Ifx_TypesTasking.h"
-"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\\Cpu\\Std\Ifx_TypesTasking.h" :
-zf_common_function.o :	"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\\Cpu\\Std\PLATFORM_TYPES.H"
-"D:\\SC\\TC264_Library-master\\Seekfree_TC264_Opensource_Library\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\\Cpu\\Std\PLATFORM_TYPES.H" :
+zf_common_function.o :	"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\\Cpu\\Std\Platform_Types.h"
+"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\\Cpu\\Std\Platform_Types.h" :
+zf_common_function.o :	"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\\Cpu\\Std\Ifx_TypesTasking.h"
+"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\\Cpu\\Std\Ifx_TypesTasking.h" :
+zf_common_function.o :	"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\\Cpu\\Std\PLATFORM_TYPES.H"
+"D:\\Software\\ADS\\Seekfree_TC264_Opensource_Library\\libraries\\infineon_libraries\\iLLD\\TC26B\\Tricore\\Cpu\\Std\PLATFORM_TYPES.H" :
 zf_common_function.o :	..\libraries\zf_common\zf_common_interrupt.h
 ..\libraries\zf_common\zf_common_interrupt.h :
 zf_common_function.o :	..\libraries\zf_common\zf_common_function.h
