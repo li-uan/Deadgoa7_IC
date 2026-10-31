@@ -38,7 +38,8 @@
 #define MOTOR_DUTY_CAP          (3000)
 
 /* 电机死区：占空比低于这个值时轮子转不动，因此只要需要动就给到这个值 */
-#define MOTOR_DEADZONE          (0)     /* 关闭死区补偿：旧版实测为 0，线性输出 */
+#define MOTOR_DEADZONE          (0.0f)   /* 默认关闭：先调直立环，稳定后再逐档开 */
+#define DEADZONE_SOFT_W         (60.0f)  /* 平滑宽度：tanh(out/W)，越小越接近阶跃 */
 
 /* ---------------- 2. 编码器 ---------------- */
 /* 逐飞的编码器编号和引脚是绑定的，见 E07_encoder_demo */
@@ -79,6 +80,23 @@
 #define ACC_INNOV_GATE_DEG      (6.0f)
 /* 连续拒绝超过该周期数后改为慢速收敛，避免永久不纠偏（200 x 5ms = 1s） */
 #define ACC_INNOV_REJECT_MAX    (200)
+/* 运行时记录抽样：每 RUN_REC_DECIM 个控制周期存一帧
+ * 4 x 5ms = 20ms，800 帧 = 16 秒，够看一次完整的速度环试验 */
+#define RUN_REC_DECIM           (4)
+
+/* ---- 左右轮补偿：补偿电机内阻 / 机械阻力差异 ----
+ * 右轮比左轮弱时，把 MOTOR_GAIN_R 调大、MOTOR_OFFSET_R 调大
+ * 输出 = 原占空比 * GAIN + sign(原占空比) * OFFSET
+ * 可用串口在线改：GR1.5 / OR300 */
+#define MOTOR_GAIN_L            (1.0f)
+#define MOTOR_GAIN_R            (1.0f)
+#define MOTOR_OFFSET_L          (0.0f)
+#define MOTOR_OFFSET_R          (0.0f)
+
+/* 陀螺标定：前 N 个周期只等待不累加（上电瞬间陀螺有大幅瞬态） */
+#define GYRO_BIAS_SKIP          (100)
+/* 侧翻保护：竖直方向重力分量低于该值(单位 g)时拒绝启动 */
+#define ARM_MIN_AZ_G            (0.60f)
 /* 标定异常判定：两轮车标定必须手持，只能拦截"明显异常"，不能要求完全静止
  * 极差超过该值说明车在明显晃动（°/s） */
 #define CALIB_RATE_SPREAD_MAX   (12.0f)
@@ -103,20 +121,22 @@
 #define PULSE_ARM_RATE         (1.0f)   /* 触发要求：角速度 8 度/秒以内（近乎静止） */   /* 倾角越界立即归零并中止 */
 
 /* ---------------- 6. 速度环（第一版先关掉，站住之后再开） ---------------- */
-#define SPEED_LOOP_ENABLE       (1)
-#define SPEED_KP                (0.0f)
-#define SPEED_KI                (0.0f)
+#define SPEED_LOOP_ENABLE       (1)      /* 1=速度环常开，烧完即生效 */
+#define SPEED_KP                (0.10f)  /* 比例：目标角偏移 = KP*(spd-target) */
+#define SPEED_KI                (0.10f)  /* 积分：吃掉死区静差，约 0.5°/s 爬升 */
 #define SPEED_TARGET            (0.0f)  /* 目标速度（编码器计数/5ms） */
-#define SPEED_I_LIMIT           (300.0f)
+#define SPEED_I_LIMIT           (1.5f)   /* 积分限幅（单位=度，必须 < TARGET_ANGLE_MAX） */
 
 /* 速度环叠加符号：串口命令 S1 / S-1 可运行时改 */
-#define SPEED_SIGN              (-1.0f)
+#define SPEED_SIGN              (1.0f)   /* +1：spd 为正(前进)时抬高目标角，往回拽 */
 
 /* 速度阻尼：输出 += SPEED_DAMP * 速度（正占空比=后驱=刹车） */
 #define SPEED_DAMP              (20.0f)
 
 /* 速度环分频：每 N 个 5ms 周期算一次（10 = 50ms） */
 #define SPEED_LOOP_DIV          (10)
+#define SPEED_DEADBAND          (0.8f)   /* 速度死区：噪声不进入积分，防静止自溜 */
+#define SPEED_GATE_MS           (300)    /* arm 后延时多久才让速度环介入 */
 
 /* 防止暴冲：速度环输出的目标倾角最大偏离（度） */
 #define TARGET_ANGLE_MAX        (2.5f)

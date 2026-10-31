@@ -18,6 +18,9 @@
  *    v=0.02,w=0.00,tgt=1.78,sg=-1.00,f=0,arm=1
  * ===================================================================== */
 
+static uint8 g_dump_req = 0;    /* A3：立即导出 */
+static uint8 g_rec_kind = 0;    /* 0 = 诊断记录(A1)；1 = 运行时记录(A2) */
+
 #define TUNE_UART           (UART_2)
 #define TUNE_BAUD           (115200)
 #define TUNE_TX_PIN         (UART2_TX_P10_5)
@@ -155,7 +158,7 @@ static void handle_line(char *line)
     }
     else if (cmd == 'W' || cmd == 'w')
     {
-        if (parse_float(&line[1], &v)) { balance_set_speed_ki(v); tx_str("OK W (KI not used, P-only)\r\n"); }
+        if (parse_float(&line[1], &v)) { balance_set_speed_ki(v); tx_str("OK W\r\n"); }
     }
     else if (cmd == 'S' || cmd == 's')
     {
@@ -169,9 +172,44 @@ static void handle_line(char *line)
     {
         if (parse_float(&line[1], &v))
         {
-            if (v >= 1.0f) { balance_set_diag(1); tx_str("OK A1 (record, motors OFF)\r\n"); }
-            else           { balance_set_diag(0); tx_str("OK A0 (diag off)\r\n"); }
+            if (v >= 3.0f)
+            {
+                g_dump_req = 1U;
+                tx_str("OK A3 (dump now)\r\n");
+            }
+            else if (v >= 2.0f)
+            {
+                balance_set_diag(0);
+                balance_set_run_rec(1);
+                g_rec_kind = 1U;
+                tx_str("OK A2 (run rec, 20ms x 800 = 16s)\r\n");
+            }
+            else if (v >= 1.0f)
+            {
+                balance_set_run_rec(0);
+                balance_set_diag(1);
+                g_rec_kind = 0U;
+                tx_str("OK A1 (diag rec, motors OFF)\r\n");
+            }
+            else
+            {
+                balance_set_diag(0);
+                balance_set_run_rec(0);
+                tx_str("OK A0 (record off)\r\n");
+            }
         }
+    }
+    else if (cmd == 'G' || cmd == 'g')
+    {
+        if (parse_float(&line[1], &v)) { balance_set_gain_r(v); tx_str("OK GR\r\n"); }
+    }
+    else if (cmd == 'O' || cmd == 'o')
+    {
+        if (parse_float(&line[1], &v)) { balance_set_offset_r(v); tx_str("OK OR\r\n"); }
+    }
+    else if (cmd == 'K' || cmd == 'k')
+    {
+        if (parse_float(&line[1], &v)) { balance_set_deadzone(v); tx_str("OK K\r\n"); }
     }
     else if (cmd == 'R' || cmd == 'r')
     {
@@ -189,21 +227,31 @@ static void handle_line(char *line)
     }
 }
 
-/* 加速度污染诊断：缓存满后一次性打印 CSV */
-static void acc_dump(void)
+/* 打印一行 CFG，保证记录能还原每帧控制计算 */
+static void dump_cfg(void)
+{
+    tx_str("CFG,Px10=");   tx_int((int32)(balance_get_kp()    * 10.0f));
+    tx_str(",Dx10=");      tx_int((int32)(balance_get_kd()    * 10.0f));
+    tx_str(",Zx100=");     tx_int((int32)(balance_get_zero()  * 100.0f));
+    tx_str(",Vx1000=");    tx_int((int32)(balance_get_speed_kp()   * 1000.0f));
+    tx_str(",Sx100=");     tx_int((int32)(balance_get_speed_sign() * 100.0f));
+    tx_str("\r\n");
+}
+
+/* 诊断记录 / 运行时记录共用：缓存满后一次性打印 CSV */
+static void acc_dump_body(uint8 run_kind)
 {
     uint16 i, n;
     const balance_acc_row_t *r;
 
-    if (!balance_diag_is_done()) return;
-
     r = balance_acc_rows();
     n = balance_acc_row_count();
 
-    tx_str("ACCREC n=");
+    tx_str((run_kind != 0U) ? "RUNREC n=" : "ACCREC n=");
     tx_int((int32)n);
     tx_str("\r\n");
-    tx_str("t_ms,ang_x100,aa_x100,ga_x100,ac_x1000,rate_x10,ax,ay,az,sl,sr\r\n");
+    dump_cfg();
+    tx_str("t_ms,ang_x100,aa_x100,ga_x100,ac_x1000,rate_x10,ax,ay,az,sl,sr,duty,raw,tgt_x100,fault,arm\r\n");
 
     for (i = 0; i < n; i++)
     {
@@ -217,11 +265,30 @@ static void acc_dump(void)
         tx_int((int32)r[i].ay_raw);    tx_str(",");
         tx_int((int32)r[i].az_raw);    tx_str(",");
         tx_int((int32)r[i].sl);        tx_str(",");
-        tx_int((int32)r[i].sr);        tx_str("\r\n");
+        tx_int((int32)r[i].sr);        tx_str(",");
+        tx_int((int32)r[i].duty);      tx_str(",");
+        tx_int((int32)r[i].raw);       tx_str(",");
+        tx_int((int32)r[i].tgt_x100);  tx_str(",");
+        tx_int((int32)r[i].fault);     tx_str(",");
+        tx_int((int32)r[i].armed);     tx_str("\r\n");
     }
-    tx_str("ACCREC end\r\n");
+    tx_str((run_kind != 0U) ? "RUNREC end\r\n" : "ACCREC end\r\n");
 
     balance_acc_clear();
+}
+
+static void acc_dump(void)
+{
+    uint8 ready = 0;
+
+    if (g_dump_req && balance_acc_row_count() > 0U)            ready = 1U;
+    else if (g_rec_kind == 0U && balance_diag_is_done())       ready = 1U;
+    else if (g_rec_kind == 1U && balance_run_rec_full())       ready = 1U;
+
+    if (!ready) return;
+
+    g_dump_req = 0;
+    acc_dump_body(g_rec_kind);
 }
 
 void tune_pulse_dump(void)
@@ -341,9 +408,13 @@ void tune_send_telemetry(void)
     tx_str(",spd="); tx_float2(speed);
     tx_str(",sl="); tx_float2(sl);
     tx_str(",sr="); tx_float2(sr);
+    tx_str(",gr="); tx_float2(balance_get_gain_r());
+    tx_str(",or="); tx_float2(balance_get_offset_r());
+    tx_str(",dz="); tx_float2(balance_get_deadzone());
     tx_str(",corr="); tx_float2(corr);
     tx_str(",v="); tx_float4(skp);
     tx_str(",w="); tx_float4(ski);
+    tx_str(",si="); tx_float4(balance_get_speed_i());
     tx_str(",tgt="); tx_float2(target);
     tx_str(",sg="); tx_float2(sign);
     tx_str(",f="); tx_int((int32)fault);

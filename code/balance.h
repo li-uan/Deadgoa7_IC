@@ -27,7 +27,18 @@ float balance_get_target(void);
 void  balance_set_speed_kp(float v);
 void  balance_set_speed_ki(float v);
 float balance_get_speed_kp(void);
+
+/* 左右轮补偿 */
+void  balance_set_gain_r(float v);
+void  balance_set_offset_r(float v);
+float balance_get_gain_r(void);
+float balance_get_offset_r(void);
+
+/* 死区补偿 */
+void  balance_set_deadzone(float v);
+float balance_get_deadzone(void);
 float balance_get_speed_ki(void);
+float balance_get_speed_i(void);
 
 /* 状态读取 */
 float balance_get_angle(void);
@@ -89,6 +100,11 @@ typedef struct {
     int16  az_raw;
     int16  sl;
     int16  sr;
+    int16  duty;        /* 本帧实际下发的占空比 */
+    int16  raw;         /* 限幅前的 PD 原始请求 */
+    int16  tgt_x100;    /* 本帧目标角（含速度环修正） */
+    uint8  fault;       /* 故障码 */
+    uint8  armed;       /* 是否使能 */
 } balance_acc_row_t;
 
 void   balance_set_diag(uint8 mode);     /* 1=开始记录(电机停转) 0=退出 */
@@ -96,6 +112,11 @@ uint8  balance_diag_is_done(void);       /* 缓存已满 */
 uint16 balance_acc_row_count(void);
 const balance_acc_row_t *balance_acc_rows(void);
 void   balance_acc_clear(void);
+
+/* ---- 运行时记录（arm 中实时记录控制帧，用于还原每帧计算） ---- */
+void   balance_set_run_rec(uint8 on);    /* 1=开始记录（清空缓冲） 0=停止 */
+uint8  balance_run_rec_full(void);       /* 已记满 */
+uint8  balance_run_rec_is_on(void);
 const char *balance_get_build(void);
 
 #endif

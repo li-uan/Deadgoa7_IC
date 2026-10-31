@@ -40,6 +40,12 @@ static float  g_bias_min    = 0.0f;     /* 标定期内角速度最小值 */
 static float  g_bias_max    = 0.0f;     /* 标定期内角速度最大值 */
 static float  g_raw_out     = 0.0f;     /* 限幅前的原始 PD 请求 */
 static uint16 g_innov_rej   = 0;        /* 加速度修正被连续拒绝的周期数 */
+static uint8  g_run_rec     = 0;        /* 1 = 运行时记录进行中 */
+static uint8  g_run_div     = 0;        /* 运行时记录抽样计数 */
+static float  g_gain_r      = MOTOR_GAIN_R;    /* 右轮增益补偿 */
+static float  g_offset_r    = MOTOR_OFFSET_R;  /* 右轮偏置补偿 */
+static float  g_last_az     = 1.0f;
+static float  g_deadzone    = MOTOR_DEADZONE;   /* 电机起转死区（占空比） */            /* 最近一次加速度计 Z 轴（单位 g） */
 
 /* ---- 加速度污染诊断记录（运行时 A1 开启） ---- */
 #define ACC_REC_N               (800)          /* 800 行 x 5ms = 4 秒 */
@@ -68,6 +74,7 @@ static float  g_zero_req    = BALANCE_ANGLE_ZERO;   /* 串口请求的零点 */
 static float  g_speed_sign  = SPEED_SIGN;
 static float  g_skp         = SPEED_KP;
 static float  g_ski         = SPEED_KI;
+static uint16 g_spd_gate    = 0;        /* arm 后计数，用于速度环延时介入 */
 static float  g_target      = 0.0f;
 
 /* ===================== 小工具 ===================== */
@@ -181,6 +188,36 @@ static void motor_stop(void)
     motor_output(0, 0);
     g_duty    = 0;
     g_raw_out = 0.0f;          /* 停机后 raw 不再是当前请求 */
+}
+
+/* 把当前一帧写入记录缓冲；诊断记录与运行时记录共用同一份缓冲 */
+static void acc_store(int16 e_l, int16 e_r, uint16 dt_ms)
+{
+    balance_acc_row_t *r;
+
+    if (g_acc_cnt >= ACC_REC_N) { g_acc_done = 1U; return; }
+
+    r = &g_acc_rows[g_acc_cnt];
+
+    r->t_ms     = (uint16)(g_acc_cnt * dt_ms);
+    r->ang_x100 = (int16)(g_angle * 100.0f);
+    r->aa_x100  = (int16)(g_acc_ang * 100.0f);
+    r->ga_x100  = (int16)(g_gyro_angle * 100.0f);
+    r->ac_x1000 = (int16)(g_acc_corr * 1000.0f);
+    r->rate_x10 = (int16)(g_gyro_rate * 10.0f);
+    r->ax_raw   = imu660rc_acc_x;
+    r->ay_raw   = imu660rc_acc_y;
+    r->az_raw   = imu660rc_acc_z;
+    r->sl       = e_l;
+    r->sr       = e_r;
+    r->duty     = g_duty;
+    r->raw      = (int16)clampf(g_raw_out, -32000.0f, 32000.0f);
+    r->tgt_x100 = (int16)(g_target * 100.0f);
+    r->fault    = g_fault;
+    r->armed    = g_armed;
+
+    g_acc_cnt++;
+    if (g_acc_cnt >= ACC_REC_N) g_acc_done = 1U;
 }
 
 /* 统一停机：切断输出 + 清运行状态 + 锁定，必须串口 R 才能重新使能 */
@@ -317,23 +354,37 @@ void balance_control_isr(void)
     /* ---------- 1. 采样 ---------- */
     imu_read_tilt_rate(&tilt_rate, &yaw_rate);
     acc_ang = imu_acc_angle();
+    g_last_az = imu660rc_acc_transition(imu660rc_acc_z);
 
     /* 上电静止标定：采样 GYRO_BIAS_SAMPLES 次求陀螺零偏，期间电机不动 */
-    if (g_bias_cnt < GYRO_BIAS_SAMPLES)
+    if (g_bias_cnt < (GYRO_BIAS_SAMPLES + GYRO_BIAS_SKIP))
     {
         g_bias_cnt++;
-        g_bias_sum += tilt_rate;
-        g_gyro_bias = g_bias_sum / (float)g_bias_cnt;
 
-        if (g_bias_cnt == 1U || tilt_rate < g_bias_min) g_bias_min = tilt_rate;
-        if (g_bias_cnt == 1U || tilt_rate > g_bias_max) g_bias_max = tilt_rate;
+        /* 前 GYRO_BIAS_SKIP 个周期只等待、不累加：
+         * 上电瞬间陀螺有 -50°/s 级瞬态，算进平均会把零偏拉偏 2~3°/s */
+        if (g_bias_cnt <= GYRO_BIAS_SKIP)
+        {
+            g_angle      = acc_ang;
+            g_gyro_angle = acc_ang;
+            g_gyro_rate  = 0.0f;
+            g_gyro_yaw   = 0.0f;
+            motor_stop();
+            return;
+        }
+
+        g_bias_sum += tilt_rate;
+        g_gyro_bias = g_bias_sum / (float)(g_bias_cnt - GYRO_BIAS_SKIP);
+
+        if (g_bias_cnt == (GYRO_BIAS_SKIP + 1U) || tilt_rate < g_bias_min) g_bias_min = tilt_rate;
+        if (g_bias_cnt == (GYRO_BIAS_SKIP + 1U) || tilt_rate > g_bias_max) g_bias_max = tilt_rate;
 
         g_angle      = acc_ang;     /* 用加速度角兜底 */
         g_gyro_angle = acc_ang;     /* 陀螺积分角同起点 */
         g_gyro_rate = 0.0f;
         g_gyro_yaw  = 0.0f;
 
-        if (g_bias_cnt >= GYRO_BIAS_SAMPLES)
+        if (g_bias_cnt >= (GYRO_BIAS_SAMPLES + GYRO_BIAS_SKIP))
         {
             /* 两轮车标定必须手持，极差类判据必然误伤，这里只拦截传感器级异常：
              * 平均零偏过大说明陀螺在持续输出（接线异常 / 传感器故障 / 车在匀速转动）。
@@ -436,27 +487,13 @@ void balance_control_isr(void)
             }
         }
 
-        if (g_acc_cnt < ACC_REC_N)
         {
             int16 e_l = encoder_get_count(ENC_L);
             int16 e_r = encoder_get_count(ENC_R);
             encoder_clear_count(ENC_L);
             encoder_clear_count(ENC_R);
 
-            g_acc_rows[g_acc_cnt].t_ms      = (uint16)(g_acc_cnt * CTRL_PERIOD_MS);
-            g_acc_rows[g_acc_cnt].ang_x100  = (int16)(g_angle * 100.0f);
-            g_acc_rows[g_acc_cnt].aa_x100   = (int16)(g_acc_ang * 100.0f);
-            g_acc_rows[g_acc_cnt].ga_x100   = (int16)(g_gyro_angle * 100.0f);
-            g_acc_rows[g_acc_cnt].ac_x1000  = (int16)(g_acc_corr * 1000.0f);
-            g_acc_rows[g_acc_cnt].rate_x10  = (int16)(g_gyro_rate * 10.0f);
-            g_acc_rows[g_acc_cnt].ax_raw    = imu660rc_acc_x;
-            g_acc_rows[g_acc_cnt].ay_raw    = imu660rc_acc_y;
-            g_acc_rows[g_acc_cnt].az_raw    = imu660rc_acc_z;
-            g_acc_rows[g_acc_cnt].sl        = e_l;
-            g_acc_rows[g_acc_cnt].sr        = e_r;
-
-            g_acc_cnt++;
-            if (g_acc_cnt >= ACC_REC_N) g_acc_done = 1U;
+            acc_store(e_l, e_r, (uint16)CTRL_PERIOD_MS);
         }
 
         g_armed = 0U;
@@ -714,6 +751,18 @@ void balance_control_isr(void)
             return;
         }
 
+        /* 侧翻/横放保护：az≈0 时 atan2(ay,az) 会塌缩成 0，
+         * 不拦住的话车躺倒也会被判成"姿态合适"而自动启动 */
+        if (fabsf(g_last_az) < ARM_MIN_AZ_G)
+        {
+            g_arm_cnt = 0;
+            encoder_clear_count(ENC_L);
+            encoder_clear_count(ENC_R);
+            g_speed = 0.0f;
+            motor_stop();
+            return;
+        }
+
         if (fabsf(g_angle - g_zero) < ARM_ANGLE_TOL)
         {
             if (++g_arm_cnt >= (ARM_HOLD_MS / CTRL_PERIOD_MS))
@@ -722,6 +771,7 @@ void balance_control_isr(void)
                 g_arm_cnt = 0;
                 g_speed_i = 0.0f;
                 g_speed_div = 0;
+                g_spd_gate = 0;
                 g_corr = 0.0f;
                 g_run_ms = 0;
                 g_fault = 0;
@@ -771,13 +821,36 @@ void balance_control_isr(void)
         g_overspeed_cnt = 0;
     }
 
-    /* ---------- 7b. 速度环：只做 P，叠加到目标角 ---------- */
+    /* ---------- 7b. 速度环：PI，输出作为目标角偏移 ---------- */
     target_angle = g_zero;
     g_corr = 0.0f;
 
 #if (SPEED_LOOP_ENABLE)
-    g_corr = g_skp * (g_speed - SPEED_TARGET);
-    target_angle += g_speed_sign * g_corr;
+    /* 刚 arm 的几百毫秒内先让直立环自己稳住，外环不插手 */
+    if (g_spd_gate < (uint16)(SPEED_GATE_MS / CTRL_PERIOD_MS)) g_spd_gate++;
+
+    if (g_spd_gate >= (uint16)(SPEED_GATE_MS / CTRL_PERIOD_MS))
+    {
+        float serr = g_speed - SPEED_TARGET;
+
+        /* 速度死区：编码器噪声和静止抖动不进入积分，否则车会自己慢慢溜 */
+        if (fabsf(serr) < SPEED_DEADBAND) serr = 0.0f;
+
+        g_corr = g_skp * serr;                     /* 比例 */
+
+        /* 抗积分饱和：比例项已经把目标角顶到限幅时，停止积分 */
+        {
+            float tgt_p = g_zero + g_speed_sign * (g_corr + g_speed_i);
+            if (fabsf(tgt_p - g_zero) < (TARGET_ANGLE_MAX - 0.05f))
+            {
+                g_speed_i += g_ski * serr * ((float)CTRL_PERIOD_MS / 1000.0f);
+                g_speed_i  = clampf(g_speed_i, -SPEED_I_LIMIT, SPEED_I_LIMIT);
+            }
+        }
+
+        g_corr += g_speed_i;                       /* 比例 + 积分 */
+        target_angle += g_speed_sign * g_corr;
+    }
 #endif
 
     target_angle = clampf(target_angle, g_zero - TARGET_ANGLE_MAX, g_zero + TARGET_ANGLE_MAX);
@@ -804,9 +877,18 @@ void balance_control_isr(void)
     /* ---------- 11. 输出 ---------- */
     out = clampf(out, -(float)MOTOR_DUTY_MAX, (float)MOTOR_DUTY_MAX);
 
-    /* 死区补偿：小占空比电机不转，会变成"要么不动、要么猛冲" */
-    if (out > 0.0f && out < (float)MOTOR_DEADZONE)          out = (float)MOTOR_DEADZONE;
-    else if (out < 0.0f && out > -(float)MOTOR_DEADZONE)    out = -(float)MOTOR_DEADZONE;
+    /* 死区补偿（平滑版）：out += K * tanh(out / W)
+     * 为什么不能用 sign()：
+     *   sign() 在零点是一个 ±K 的阶跃。阶跃对正弦输入的描述函数增益
+     *   |N| = 4K/(pi*A)，A->0 时趋于无穷 —— 也就是车越接近平衡点，
+     *   控制器越像在发方波。只要回路有采样延迟就必然形成极限环。
+     *   实测 sign 版在 K=400~700 时出现 >=5Hz 持续抖动，就是这个原因。
+     * tanh 在零点连续、小信号增益有限；大信号时仍近似全额补偿。
+     * K = 0 时整段不执行，完全等价于没有补偿。 */
+    if (g_deadzone > 0.0f)
+    {
+        out += g_deadzone * tanhf(out * (1.0f / DEADZONE_SOFT_W));
+    }
 
 #if (MOTOR_DUTY_CAP > 0)
     /* 诊断期限幅：限制最大输出，避免持续单向加速时车速过高 */
@@ -815,8 +897,36 @@ void balance_control_isr(void)
 
     g_duty = (int16)out;
 
-    motor_output(1, (int16)clampf(out + yaw_corr, -(float)MOTOR_DUTY_MAX, (float)MOTOR_DUTY_MAX));
-    motor_output(0, (int16)clampf(out - yaw_corr, -(float)MOTOR_DUTY_MAX, (float)MOTOR_DUTY_MAX));
+    /* ---------- 11b. 运行时记录（A2 开启，20ms 一帧，共 16 秒） ---------- */
+    if (g_run_rec)
+    {
+        g_run_div++;
+        if (g_run_div >= (uint8)RUN_REC_DECIM)
+        {
+            g_run_div = 0;
+            acc_store((int16)g_sl, (int16)g_sr, (uint16)(CTRL_PERIOD_MS * RUN_REC_DECIM));
+
+            if (g_acc_cnt >= ACC_REC_N) g_run_rec = 0U;   /* 记满自动停 */
+        }
+    }
+
+    /* 左右轮独立补偿：右电机内阻偏大 / 机械阻力偏大时，靠增益和偏置补齐 */
+    {
+        float l_cmd = MOTOR_GAIN_L * (out + yaw_corr);
+        float r_cmd = g_gain_r * (out - yaw_corr);
+
+        if (l_cmd > 0.0f)       l_cmd += MOTOR_OFFSET_L;
+        else if (l_cmd < 0.0f)  l_cmd -= MOTOR_OFFSET_L;
+
+        if (r_cmd > 0.0f)       r_cmd += g_offset_r;
+        else if (r_cmd < 0.0f)  r_cmd -= g_offset_r;
+
+        l_cmd = clampf(l_cmd, -(float)MOTOR_DUTY_MAX, (float)MOTOR_DUTY_MAX);
+        r_cmd = clampf(r_cmd, -(float)MOTOR_DUTY_MAX, (float)MOTOR_DUTY_MAX);
+
+        motor_output(1, (int16)l_cmd);
+        motor_output(0, (int16)r_cmd);
+    }
 
     /* ---------- 12. 堵转 / 失控 ---------- */
     if (fabsf((float)g_duty) > (float)STALL_DUTY_TH && enc_l == 0 && enc_r == 0)
@@ -876,6 +986,14 @@ void  balance_set_kp(float v)   { g_kp = clampf(v, 0.0f, 3000.0f); }
 void  balance_set_kd(float v)   { g_kd = clampf(v, 0.0f, 500.0f); }
 void  balance_set_zero(float v) { g_zero_req = clampf(v, -30.0f, 30.0f); }
 
+void  balance_set_gain_r(float v)   { g_gain_r = clampf(v, 0.2f, 3.0f); }
+void  balance_set_offset_r(float v) { g_offset_r = clampf(v, 0.0f, 1500.0f); }
+float balance_get_gain_r(void)      { return g_gain_r; }
+float balance_get_offset_r(void)    { return g_offset_r; }
+
+void  balance_set_deadzone(float v) { g_deadzone = clampf(v, 0.0f, 1500.0f); }
+float balance_get_deadzone(void)    { return g_deadzone; }
+
 float balance_get_kp(void)      { return g_kp; }
 float balance_get_kd(void)      { return g_kd; }
 float balance_get_zero(void)    { return g_zero; }
@@ -897,6 +1015,7 @@ void  balance_set_speed_kp(float v)   { g_skp = clampf(v, 0.0f, 1.0f); }
 void  balance_set_speed_ki(float v)   { g_ski = clampf(v, 0.0f, 1.0f); }
 float balance_get_speed_kp(void)      { return g_skp; }
 float balance_get_speed_ki(void)      { return g_ski; }
+float balance_get_speed_i(void)       { return g_speed_i; }
 
 /* 诊断遥测接口：只读，不改变平衡控制计算。 */
 float balance_get_rate(void) { return g_gyro_rate; }
@@ -942,7 +1061,7 @@ float balance_get_raw_out(void) { return g_raw_out; }
 uint8 balance_clear_rearm(void)
 {
     /* 标定未完成、或标定未通过时拒绝解锁，避免把真正的故障掩盖掉 */
-    if (g_bias_cnt < GYRO_BIAS_SAMPLES) return 0U;
+    if (g_bias_cnt < (GYRO_BIAS_SAMPLES + GYRO_BIAS_SKIP)) return 0U;
     if (!g_calib_ok)                    return 0U;
 
     g_need_rearm  = 0U;
@@ -972,6 +1091,17 @@ uint8  balance_diag_is_done(void)      { return g_acc_done; }
 uint16 balance_acc_row_count(void)     { return g_acc_cnt; }
 const balance_acc_row_t *balance_acc_rows(void) { return g_acc_rows; }
 
+void balance_set_run_rec(uint8 on)
+{
+    g_acc_cnt  = 0;
+    g_acc_done = 0;
+    g_run_div  = 0;
+    g_run_rec  = (on != 0U) ? 1U : 0U;
+}
+
+uint8 balance_run_rec_full(void)  { return (uint8)((g_run_rec == 0U) && (g_acc_cnt >= ACC_REC_N)); }
+uint8 balance_run_rec_is_on(void) { return g_run_rec; }
+
 void   balance_acc_clear(void)
 {
     g_acc_cnt  = 0;
@@ -979,7 +1109,7 @@ void   balance_acc_clear(void)
 }
 
 uint8 balance_get_test_mode(void) { return (uint8)TEST_MODE; }
-const char *balance_get_build(void) { return "DIAG-20261031-C"; }
+const char *balance_get_build(void) { return "DIAG-20261031-H"; }
 
 /* ===================== TEST_MODE=8 数据导出 ===================== */
 void  balance_set_pulse_duty(float v) { g_pulse_duty = v; }
